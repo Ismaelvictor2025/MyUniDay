@@ -1,9 +1,57 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="1" systemVersion="11A491" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="false" userDefinedModelVersionIdentifier="">
-    <entity name="Item" representedClassName="Item" syncable="YES" codeGenerationType="class">
-        <attribute name="timestamp" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+    <entity name="SubjectEntity" representedClassName="SubjectEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="code" optional="NO" attributeType="String"/>
+        <attribute name="colorHex" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" optional="NO" attributeType="String"/>
+        <relationship name="assessments" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="AssessmentEntity" inverseName="subject" inverseEntity="AssessmentEntity"/>
+        <relationship name="classSessions" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="ClassSessionEntity" inverseName="subject" inverseEntity="ClassSessionEntity"/>
+    </entity>
+    <entity name="AssessmentEntity" representedClassName="AssessmentEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="dueDate" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="estimatedWorkloadHours" optional="NO" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isCompleted" optional="NO" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="notes" optional="YES" attributeType="String"/>
+        <attribute name="progress" optional="NO" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="title" optional="NO" attributeType="String"/>
+        <attribute name="weighting" optional="NO" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <relationship name="subject" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SubjectEntity" inverseName="assessments" inverseEntity="SubjectEntity"/>
+        <relationship name="tasks" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="AssessmentTaskEntity" inverseName="assessment" inverseEntity="AssessmentTaskEntity"/>
+    </entity>
+    <entity name="AssessmentTaskEntity" representedClassName="AssessmentTaskEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="dueDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isCompleted" optional="NO" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="orderIndex" optional="NO" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="title" optional="NO" attributeType="String"/>
+        <relationship name="assessment" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="AssessmentEntity" inverseName="tasks" inverseEntity="AssessmentEntity"/>
+    </entity>
+    <entity name="ClassSessionEntity" representedClassName="ClassSessionEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="building" optional="NO" attributeType="String"/>
+        <attribute name="campus" optional="NO" attributeType="String"/>
+        <attribute name="classTypeRaw" optional="NO" attributeType="String"/>
+        <attribute name="endDate" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="room" optional="NO" attributeType="String"/>
+        <attribute name="startDate" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="preparationItems" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="PreparationItemEntity" inverseName="classSession" inverseEntity="PreparationItemEntity"/>
+        <relationship name="subject" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SubjectEntity" inverseName="classSessions" inverseEntity="SubjectEntity"/>
+    </entity>
+    <entity name="PreparationItemEntity" representedClassName="PreparationItemEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isCompleted" optional="NO" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="notes" optional="YES" attributeType="String"/>
+        <attribute name="orderIndex" optional="NO" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="title" optional="NO" attributeType="String"/>
+        <relationship name="classSession" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ClassSessionEntity" inverseName="preparationItems" inverseEntity="ClassSessionEntity"/>
     </entity>
     <elements>
-        <element name="Item" positionX="-63" positionY="-18" width="128" height="44"/>
+        <element name="SubjectEntity" positionX="-63" positionY="-18" width="128" height="134"/>
+        <element name="AssessmentEntity" positionX="120" positionY="-18" width="128" height="179"/>
+        <element name="AssessmentTaskEntity" positionX="300" positionY="-18" width="128" height="119"/>
+        <element name="ClassSessionEntity" positionX="120" positionY="200" width="128" height="164"/>
+        <element name="PreparationItemEntity" positionX="300" positionY="200" width="128" height="119"/>
     </elements>
 </model>
