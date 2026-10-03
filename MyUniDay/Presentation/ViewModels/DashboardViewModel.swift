@@ -11,7 +11,7 @@ import Observation
 /// Coordinates data for the My Uni Day student dashboard view.
 ///
 /// Connects existing Domain Use Cases to future SwiftUI views, presenting:
-/// - Priority-ordered incomplete assessments
+/// - Priority-ordered incomplete assessments paired with their priority classifications
 /// - The student's immediate next upcoming class
 /// - Preparation checklist for the upcoming class
 /// - Loading and user-friendly error states
@@ -22,8 +22,12 @@ public final class DashboardViewModel {
     private let getPriorityAssessmentsUseCase: GetPriorityAssessmentsUseCase
     private let getNextClassUseCase: GetNextClassUseCase
     private let getClassPreparationUseCase: GetClassPreparationUseCase
+    private let calculatePriorityUseCase: CalculateAssessmentPriorityUseCase
 
     // MARK: - Presentation State
+    /// Incomplete assessments paired with their calculated priority classifications.
+    public private(set) var prioritisedAssessments: [PrioritisedAssessmentItem] = []
+
     /// Incomplete assessments sorted by priority and urgency.
     public private(set) var priorityAssessments: [Assessment] = []
 
@@ -46,14 +50,17 @@ public final class DashboardViewModel {
     ///   - getPriorityAssessmentsUseCase: Use case for retrieving priority-ordered assessments.
     ///   - getNextClassUseCase: Use case for retrieving the next class session.
     ///   - getClassPreparationUseCase: Use case for retrieving class preparation items.
+    ///   - calculatePriorityUseCase: Use case for pairing assessments with their priority (defaults to a new instance).
     public init(
         getPriorityAssessmentsUseCase: GetPriorityAssessmentsUseCase,
         getNextClassUseCase: GetNextClassUseCase,
-        getClassPreparationUseCase: GetClassPreparationUseCase
+        getClassPreparationUseCase: GetClassPreparationUseCase,
+        calculatePriorityUseCase: CalculateAssessmentPriorityUseCase = CalculateAssessmentPriorityUseCase()
     ) {
         self.getPriorityAssessmentsUseCase = getPriorityAssessmentsUseCase
         self.getNextClassUseCase = getNextClassUseCase
         self.getClassPreparationUseCase = getClassPreparationUseCase
+        self.calculatePriorityUseCase = calculatePriorityUseCase
     }
 
     // MARK: - Actions
@@ -71,6 +78,10 @@ public final class DashboardViewModel {
             let (fetchedAssessments, fetchedNextClass) = try await (assessmentsTask, nextClassTask)
 
             self.priorityAssessments = fetchedAssessments
+            self.prioritisedAssessments = fetchedAssessments.map { assessment in
+                let priority = calculatePriorityUseCase.execute(for: assessment, relativeTo: referenceDate)
+                return PrioritisedAssessmentItem(assessment: assessment, priority: priority)
+            }
             self.nextClass = fetchedNextClass
 
             if let classSession = fetchedNextClass {

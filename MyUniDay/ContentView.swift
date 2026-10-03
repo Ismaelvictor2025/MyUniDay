@@ -2,48 +2,58 @@
 //  ContentView.swift
 //  MyUniDay
 //
-//  Stage 1 placeholder view.
+//  Root application container view hosting the MyUniDay Dashboard.
 //
 
 import SwiftUI
 
-/// Stage 1 application entry view demonstrating architectural decoupling.
+/// Root application view hosting the main `DashboardView`.
 ///
-/// Views and ViewModels never directly interact with Core Data or NSManagedObject.
+/// Obtains its `DashboardViewModel` from the composition root (`AppDependencyContainer`),
+/// maintaining complete architectural decoupling from persistence details.
+///
+/// In development (`#if DEBUG`), it supports switching between an isolated in-memory demo dataset
+/// and the live production store without contaminating persistent storage.
+@MainActor
 struct ContentView: View {
+    @State private var viewModel: DashboardViewModel
+    #if DEBUG
+    @State private var isDemoMode: Bool = true
+    #endif
+
+    init(viewModel: DashboardViewModel) {
+        _viewModel = State(initialValue: viewModel)
+    }
+
+    init() {
+        #if DEBUG
+        // Default to demo mode in debug so the simulator shows populated dashboard immediately!
+        _viewModel = State(initialValue: DevelopmentDemoData.makeDemoViewModel())
+        #else
+        _viewModel = State(initialValue: AppDependencyContainer.shared.makeDashboardViewModel())
+        #endif
+    }
+
     var body: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "graduationcap.fill")
-                .font(.system(size: 64))
-                .foregroundColor(.accentColor)
-
-            Text("MyUniDay")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-
-            Text("Stage 1 — Domain Foundation")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-
-            Divider()
-                .padding(.horizontal, 40)
-
-            VStack(alignment: .leading, spacing: 8) {
-                Label("Domain Models Configured", systemImage: "checkmark.circle.fill")
-                    .foregroundColor(.green)
-                Label("Core Data Schema Configured", systemImage: "checkmark.circle.fill")
-                    .foregroundColor(.green)
-                Label("Repository Protocols Configured", systemImage: "checkmark.circle.fill")
-                    .foregroundColor(.green)
-                Label("Data Mappers Configured", systemImage: "checkmark.circle.fill")
-                    .foregroundColor(.green)
+        #if DEBUG
+        DashboardView(
+            viewModel: viewModel,
+            isDemoMode: isDemoMode,
+            onSwitchMode: { useDemo in
+                isDemoMode = useDemo
+                if useDemo {
+                    viewModel = DevelopmentDemoData.makeDemoViewModel()
+                } else {
+                    viewModel = AppDependencyContainer.shared.makeDashboardViewModel()
+                }
+                Task {
+                    await viewModel.loadDashboard()
+                }
             }
-            .font(.callout)
-            .padding()
-            .background(Color(.secondarySystemBackground))
-            .cornerRadius(12)
-        }
-        .padding()
+        )
+        #else
+        DashboardView(viewModel: viewModel)
+        #endif
     }
 }
 
