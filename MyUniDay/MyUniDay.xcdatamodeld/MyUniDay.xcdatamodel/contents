@@ -47,11 +47,40 @@
         <attribute name="title" optional="NO" attributeType="String"/>
         <relationship name="classSession" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ClassSessionEntity" inverseName="preparationItems" inverseEntity="ClassSessionEntity"/>
     </entity>
+    <entity name="GroupProjectEntity" representedClassName="GroupProjectEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="dueDate" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="myRole" optional="YES" attributeType="String"/>
+        <attribute name="name" optional="NO" attributeType="String"/>
+        <attribute name="progress" optional="NO" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="subjectId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <relationship name="members" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="GroupMemberEntity" inverseName="project" inverseEntity="GroupMemberEntity"/>
+        <relationship name="tasks" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="GroupTaskEntity" inverseName="project" inverseEntity="GroupTaskEntity"/>
+    </entity>
+    <entity name="GroupMemberEntity" representedClassName="GroupMemberEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" optional="NO" attributeType="String"/>
+        <attribute name="role" optional="YES" attributeType="String"/>
+        <relationship name="assignedTasks" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="GroupTaskEntity" inverseName="assignedMember" inverseEntity="GroupTaskEntity"/>
+        <relationship name="project" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="GroupProjectEntity" inverseName="members" inverseEntity="GroupProjectEntity"/>
+    </entity>
+    <entity name="GroupTaskEntity" representedClassName="GroupTaskEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="dueDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isCompleted" optional="NO" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="orderIndex" optional="NO" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="title" optional="NO" attributeType="String"/>
+        <relationship name="assignedMember" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="GroupMemberEntity" inverseName="assignedTasks" inverseEntity="GroupMemberEntity"/>
+        <relationship name="project" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="GroupProjectEntity" inverseName="tasks" inverseEntity="GroupProjectEntity"/>
+    </entity>
     <elements>
         <element name="SubjectEntity" positionX="-63" positionY="-18" width="128" height="134"/>
         <element name="AssessmentEntity" positionX="120" positionY="-18" width="128" height="179"/>
         <element name="AssessmentTaskEntity" positionX="300" positionY="-18" width="128" height="119"/>
         <element name="ClassSessionEntity" positionX="120" positionY="200" width="128" height="164"/>
         <element name="PreparationItemEntity" positionX="300" positionY="200" width="128" height="119"/>
+        <element name="GroupProjectEntity" positionX="-63" positionY="200" width="128" height="164"/>
+        <element name="GroupMemberEntity" positionX="-63" positionY="390" width="128" height="119"/>
+        <element name="GroupTaskEntity" positionX="120" positionY="390" width="128" height="149"/>
     </elements>
 </model>

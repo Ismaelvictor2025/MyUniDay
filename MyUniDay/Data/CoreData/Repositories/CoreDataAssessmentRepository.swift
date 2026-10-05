@@ -16,6 +16,15 @@ public final class CoreDataAssessmentRepository: AssessmentRepositoryProtocol {
         self.context = context
     }
 
+    public func fetchAllAssessments() async throws -> [Assessment] {
+        try await context.perform {
+            let request: NSFetchRequest<AssessmentEntity> = AssessmentEntity.fetchRequest()
+            request.sortDescriptors = [NSSortDescriptor(keyPath: \AssessmentEntity.dueDate, ascending: true)]
+            let results = try self.context.fetch(request)
+            return results.map { $0.toDomain() }
+        }
+    }
+
     public func fetchAssessments(forSubjectId subjectId: UUID) async throws -> [Assessment] {
         try await context.perform {
             let request: NSFetchRequest<AssessmentEntity> = AssessmentEntity.fetchRequest()

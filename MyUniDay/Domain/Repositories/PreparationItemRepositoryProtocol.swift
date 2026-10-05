@@ -11,6 +11,11 @@ import Foundation
 ///
 /// Designed to support upcoming "What do I need to bring?" queries and checklists.
 public protocol PreparationItemRepositoryProtocol: Sendable {
+    /// Retrieves all preparation items across all class sessions.
+    ///
+    /// - Returns: An array of `PreparationItem` models.
+    func fetchAllPreparationItems() async throws -> [PreparationItem]
+
     /// Retrieves all preparation items for a given class session.
     ///
     /// - Parameter sessionId: The UUID of the class session.
@@ -34,4 +39,10 @@ public protocol PreparationItemRepositoryProtocol: Sendable {
     ///
     /// - Parameter id: The UUID of the preparation item to delete.
     func deletePreparationItem(by id: UUID) async throws
+}
+
+public extension PreparationItemRepositoryProtocol {
+    func fetchAllPreparationItems() async throws -> [PreparationItem] {
+        return []
+    }
 }

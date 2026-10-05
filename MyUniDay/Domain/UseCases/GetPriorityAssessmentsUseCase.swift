@@ -10,8 +10,8 @@ import Foundation
 /// Retrieves assessments via `AssessmentRepositoryProtocol` and returns only incomplete
 /// assessments ordered deterministically by priority and urgency.
 public final class GetPriorityAssessmentsUseCase: Sendable {
-    private let assessmentRepository: AssessmentRepositoryProtocol
-    private let calculatePriorityUseCase: CalculateAssessmentPriorityUseCase
+    public let assessmentRepository: AssessmentRepositoryProtocol
+    public let calculatePriorityUseCase: CalculateAssessmentPriorityUseCase
 
     /// Initializes the use case with dependencies.
     ///
@@ -36,10 +36,18 @@ public final class GetPriorityAssessmentsUseCase: Sendable {
         relativeTo referenceDate: Date = Date(),
         maxDueDate: Date = .distantFuture
     ) async throws -> [Assessment] {
-        let fetched = try await assessmentRepository.fetchIncompleteAssessments(
+        var fetched = try await assessmentRepository.fetchIncompleteAssessments(
             dueBetween: .distantPast,
             and: maxDueDate
         )
+
+        // Safety fallback: if query returned nothing, verify against all assessments to guarantee
+        // no incomplete coursework is missed due to date filter boundary edge cases.
+        if fetched.isEmpty {
+            let all = try await assessmentRepository.fetchAllAssessments()
+            fetched = all.filter { !$0.isCompleted && $0.progress < 0.999 && $0.dueDate <= maxDueDate }
+        }
+
         return orderIncompleteAssessments(fetched, relativeTo: referenceDate)
     }
 

@@ -165,3 +165,85 @@ extension PreparationItemEntity {
         self.orderIndex = Int16(domain.orderIndex)
     }
 }
+
+// MARK: - Group Project Mapping
+
+extension GroupProjectEntity {
+    /// Converts a persistent `GroupProjectEntity` to a domain `GroupProject`.
+    public func toDomain() -> GroupProject {
+        let memberEntities = (self.members as? Set<GroupMemberEntity>) ?? []
+        let domainMembers = memberEntities
+            .map { $0.toDomain() }
+            .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
+
+        let taskEntities = (self.tasks as? Set<GroupTaskEntity>) ?? []
+        let domainTasks = taskEntities
+            .map { $0.toDomain() }
+            .sorted { $0.orderIndex < $1.orderIndex }
+
+        return GroupProject(
+            id: self.id ?? UUID(),
+            name: self.name ?? "",
+            subjectId: self.subjectId,
+            dueDate: self.dueDate ?? Date(),
+            myRole: self.myRole ?? "Member",
+            members: domainMembers,
+            tasks: domainTasks
+        )
+    }
+
+    /// Updates this managed object from a domain model.
+    public func update(from domain: GroupProject) {
+        self.id = domain.id
+        self.name = domain.name
+        self.subjectId = domain.subjectId
+        self.dueDate = domain.dueDate
+        self.myRole = domain.myRole
+        self.progress = domain.progress
+    }
+}
+
+// MARK: - Group Member Mapping
+
+extension GroupMemberEntity {
+    /// Converts a persistent `GroupMemberEntity` to a domain `GroupMember`.
+    public func toDomain() -> GroupMember {
+        return GroupMember(
+            id: self.id ?? UUID(),
+            name: self.name ?? "",
+            role: self.role
+        )
+    }
+
+    /// Updates this managed object from a domain model.
+    public func update(from domain: GroupMember) {
+        self.id = domain.id
+        self.name = domain.name
+        self.role = domain.role
+    }
+}
+
+// MARK: - Group Task Mapping
+
+extension GroupTaskEntity {
+    /// Converts a persistent `GroupTaskEntity` to a domain `GroupTask`.
+    public func toDomain() -> GroupTask {
+        return GroupTask(
+            id: self.id ?? UUID(),
+            title: self.title ?? "",
+            dueDate: self.dueDate,
+            assignedMemberId: self.assignedMember?.id,
+            isCompleted: self.isCompleted,
+            orderIndex: Int(self.orderIndex)
+        )
+    }
+
+    /// Updates this managed object from a domain model.
+    public func update(from domain: GroupTask) {
+        self.id = domain.id
+        self.title = domain.title
+        self.dueDate = domain.dueDate
+        self.isCompleted = domain.isCompleted
+        self.orderIndex = Int16(domain.orderIndex)
+    }
+}

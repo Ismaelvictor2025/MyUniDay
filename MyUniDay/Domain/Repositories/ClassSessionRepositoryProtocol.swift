@@ -11,6 +11,11 @@ import Foundation
 ///
 /// Designed to support upcoming timetable and class preparation workflows.
 public protocol ClassSessionRepositoryProtocol: Sendable {
+    /// Retrieves all class sessions across all subjects.
+    ///
+    /// - Returns: An array of `ClassSession` models.
+    func fetchAllClassSessions() async throws -> [ClassSession]
+
     /// Retrieves all class sessions for a specific subject.
     ///
     /// - Parameter subjectId: The UUID of the parent subject.
@@ -41,4 +46,10 @@ public protocol ClassSessionRepositoryProtocol: Sendable {
     ///
     /// - Parameter id: The UUID of the class session to delete.
     func deleteClassSession(by id: UUID) async throws
+}
+
+public extension ClassSessionRepositoryProtocol {
+    func fetchAllClassSessions() async throws -> [ClassSession] {
+        try await fetchUpcomingClassSessions(from: .distantPast)
+    }
 }

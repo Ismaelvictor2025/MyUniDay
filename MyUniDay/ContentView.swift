@@ -2,57 +2,44 @@
 //  ContentView.swift
 //  MyUniDay
 //
-//  Root application container view hosting the MyUniDay Dashboard.
+//  Root application container view hosting the primary MainTabView navigation.
 //
 
 import SwiftUI
 
-/// Root application view hosting the main `DashboardView`.
+/// Root application view hosting `MainTabView`.
 ///
-/// Obtains its `DashboardViewModel` from the composition root (`AppDependencyContainer`),
+/// Obtains its dependencies from the composition root (`AppDependencyContainer`),
 /// maintaining complete architectural decoupling from persistence details.
 ///
 /// In development (`#if DEBUG`), it supports switching between an isolated in-memory demo dataset
 /// and the live production store without contaminating persistent storage.
 @MainActor
 struct ContentView: View {
-    @State private var viewModel: DashboardViewModel
     #if DEBUG
     @State private var isDemoMode: Bool = true
+    @State private var container: AppDependencyContainer = DevelopmentDemoData.makeDemoContainer()
+    #else
+    private let container: AppDependencyContainer = AppDependencyContainer.shared
     #endif
-
-    init(viewModel: DashboardViewModel) {
-        _viewModel = State(initialValue: viewModel)
-    }
-
-    init() {
-        #if DEBUG
-        // Default to demo mode in debug so the simulator shows populated dashboard immediately!
-        _viewModel = State(initialValue: DevelopmentDemoData.makeDemoViewModel())
-        #else
-        _viewModel = State(initialValue: AppDependencyContainer.shared.makeDashboardViewModel())
-        #endif
-    }
 
     var body: some View {
         #if DEBUG
-        DashboardView(
-            viewModel: viewModel,
+        MainTabView(
+            container: container,
             isDemoMode: isDemoMode,
             onSwitchMode: { useDemo in
                 isDemoMode = useDemo
                 if useDemo {
-                    viewModel = DevelopmentDemoData.makeDemoViewModel()
+                    container = DevelopmentDemoData.makeDemoContainer()
                 } else {
-                    viewModel = AppDependencyContainer.shared.makeDashboardViewModel()
-                }
-                Task {
-                    await viewModel.loadDashboard()
+                    container = AppDependencyContainer.shared
                 }
             }
         )
+        .id(isDemoMode) // Ensures clean view recreation upon mode switch
         #else
-        DashboardView(viewModel: viewModel)
+        MainTabView(container: container)
         #endif
     }
 }

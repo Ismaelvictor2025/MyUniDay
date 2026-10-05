@@ -18,41 +18,255 @@ public final class AppDependencyContainer {
     /// Shared instance using the standard application persistence controller.
     public static let shared = AppDependencyContainer()
 
-    private let persistenceController: PersistenceController
+    // MARK: - Repositories
+    public let subjectRepository: SubjectRepositoryProtocol
+    public let assessmentRepository: AssessmentRepositoryProtocol
+    public let classSessionRepository: ClassSessionRepositoryProtocol
+    public let preparationItemRepository: PreparationItemRepositoryProtocol
+    public let groupProjectRepository: GroupProjectRepositoryProtocol
 
-    /// Initializes the composition container.
+    // MARK: - Domain Use Cases
+    public let calculatePriorityUseCase: CalculateAssessmentPriorityUseCase
+    public let getPriorityAssessmentsUseCase: GetPriorityAssessmentsUseCase
+    public let getNextClassUseCase: GetNextClassUseCase
+    public let getClassPreparationUseCase: GetClassPreparationUseCase
+    public let getAllClassesUseCase: GetAllClassesUseCase
+    public let createAssessmentUseCase: CreateAssessmentUseCase
+    public let createClassSessionUseCase: CreateClassSessionUseCase
+    public let createSubjectUseCase: CreateSubjectUseCase
+    public let getSubjectsUseCase: GetSubjectsUseCase
+    public let toggleTaskCompletionUseCase: ToggleTaskCompletionUseCase
+    public let createTaskUseCase: CreateTaskUseCase
+    public let calculateAcademicProgressUseCase: CalculateAcademicProgressUseCase
+    public let getStudyNowRecommendationUseCase: GetStudyNowRecommendationUseCase
+    public let updateAssessmentProgressUseCase: UpdateAssessmentProgressUseCase
+
+    /// Initializes the composition container with Core Data persistence.
     ///
     /// - Parameter persistenceController: The Core Data persistence controller (defaults to `.shared`).
     public init(persistenceController: PersistenceController = .shared) {
-        self.persistenceController = persistenceController
-    }
-
-    /// Creates and configures a `DashboardViewModel` with its required Domain Use Cases.
-    ///
-    /// - Returns: A fully configured `DashboardViewModel` instance.
-    public func makeDashboardViewModel() -> DashboardViewModel {
         let viewContext = persistenceController.container.viewContext
 
-        // 1. Data Layer: Repositories
-        let assessmentRepository = CoreDataAssessmentRepository(context: viewContext)
-        let classSessionRepository = CoreDataClassSessionRepository(context: viewContext)
-        let preparationItemRepository = CoreDataPreparationItemRepository(context: viewContext)
+        // Repositories
+        self.subjectRepository = CoreDataSubjectRepository(context: viewContext)
+        self.assessmentRepository = CoreDataAssessmentRepository(context: viewContext)
+        self.classSessionRepository = CoreDataClassSessionRepository(context: viewContext)
+        self.preparationItemRepository = CoreDataPreparationItemRepository(context: viewContext)
+        self.groupProjectRepository = CoreDataGroupProjectRepository(context: viewContext)
 
-        // 2. Domain Layer: Use Cases
-        let calculatePriorityUseCase = CalculateAssessmentPriorityUseCase()
-        let getPriorityAssessmentsUseCase = GetPriorityAssessmentsUseCase(
-            assessmentRepository: assessmentRepository,
-            calculatePriorityUseCase: calculatePriorityUseCase
+        // Use Cases
+        let calcPriority = CalculateAssessmentPriorityUseCase()
+        self.calculatePriorityUseCase = calcPriority
+        let priorityAssessmentsUseCase = GetPriorityAssessmentsUseCase(
+            assessmentRepository: self.assessmentRepository,
+            calculatePriorityUseCase: calcPriority
         )
-        let getNextClassUseCase = GetNextClassUseCase(classSessionRepository: classSessionRepository)
-        let getClassPreparationUseCase = GetClassPreparationUseCase(preparationItemRepository: preparationItemRepository)
+        self.getPriorityAssessmentsUseCase = priorityAssessmentsUseCase
+        self.getNextClassUseCase = GetNextClassUseCase(classSessionRepository: self.classSessionRepository)
+        self.getClassPreparationUseCase = GetClassPreparationUseCase(preparationItemRepository: self.preparationItemRepository)
+        self.getAllClassesUseCase = GetAllClassesUseCase(classSessionRepository: self.classSessionRepository)
+        self.createAssessmentUseCase = CreateAssessmentUseCase(assessmentRepository: self.assessmentRepository)
+        self.createClassSessionUseCase = CreateClassSessionUseCase(classSessionRepository: self.classSessionRepository)
+        self.createSubjectUseCase = CreateSubjectUseCase(subjectRepository: self.subjectRepository)
+        let getSubj = GetSubjectsUseCase(subjectRepository: self.subjectRepository)
+        self.getSubjectsUseCase = getSubj
+        self.toggleTaskCompletionUseCase = ToggleTaskCompletionUseCase(
+            assessmentRepository: self.assessmentRepository,
+            preparationItemRepository: self.preparationItemRepository
+        )
+        self.createTaskUseCase = CreateTaskUseCase(
+            assessmentRepository: self.assessmentRepository,
+            preparationItemRepository: self.preparationItemRepository
+        )
+        self.calculateAcademicProgressUseCase = CalculateAcademicProgressUseCase(
+            assessmentRepository: self.assessmentRepository,
+            preparationItemRepository: self.preparationItemRepository,
+            subjectRepository: self.subjectRepository
+        )
+        self.getStudyNowRecommendationUseCase = GetStudyNowRecommendationUseCase(
+            getPriorityAssessmentsUseCase: priorityAssessmentsUseCase,
+            calculatePriorityUseCase: calcPriority
+        )
+        self.updateAssessmentProgressUseCase = UpdateAssessmentProgressUseCase(
+            assessmentRepository: self.assessmentRepository
+        )
+    }
 
-        // 3. Presentation Layer: ViewModel
-        return DashboardViewModel(
+    /// Initializes the composition container with custom/mock repositories (useful for testing and demo mode).
+    public init(
+        subjectRepository: SubjectRepositoryProtocol,
+        assessmentRepository: AssessmentRepositoryProtocol,
+        classSessionRepository: ClassSessionRepositoryProtocol,
+        preparationItemRepository: PreparationItemRepositoryProtocol,
+        groupProjectRepository: GroupProjectRepositoryProtocol? = nil
+    ) {
+        self.subjectRepository = subjectRepository
+        self.assessmentRepository = assessmentRepository
+        self.classSessionRepository = classSessionRepository
+        self.preparationItemRepository = preparationItemRepository
+        self.groupProjectRepository = groupProjectRepository ?? CoreDataGroupProjectRepository()
+
+        let calcPriority = CalculateAssessmentPriorityUseCase()
+        self.calculatePriorityUseCase = calcPriority
+        let priorityAssessmentsUseCase = GetPriorityAssessmentsUseCase(
+            assessmentRepository: assessmentRepository,
+            calculatePriorityUseCase: calcPriority
+        )
+        self.getPriorityAssessmentsUseCase = priorityAssessmentsUseCase
+        self.getNextClassUseCase = GetNextClassUseCase(classSessionRepository: classSessionRepository)
+        self.getClassPreparationUseCase = GetClassPreparationUseCase(preparationItemRepository: preparationItemRepository)
+        self.getAllClassesUseCase = GetAllClassesUseCase(classSessionRepository: classSessionRepository)
+        self.createAssessmentUseCase = CreateAssessmentUseCase(assessmentRepository: assessmentRepository)
+        self.createClassSessionUseCase = CreateClassSessionUseCase(classSessionRepository: classSessionRepository)
+        self.createSubjectUseCase = CreateSubjectUseCase(subjectRepository: subjectRepository)
+        let getSubj = GetSubjectsUseCase(subjectRepository: subjectRepository)
+        self.getSubjectsUseCase = getSubj
+        self.toggleTaskCompletionUseCase = ToggleTaskCompletionUseCase(
+            assessmentRepository: assessmentRepository,
+            preparationItemRepository: preparationItemRepository
+        )
+        self.createTaskUseCase = CreateTaskUseCase(
+            assessmentRepository: assessmentRepository,
+            preparationItemRepository: preparationItemRepository
+        )
+        self.calculateAcademicProgressUseCase = CalculateAcademicProgressUseCase(
+            assessmentRepository: assessmentRepository,
+            preparationItemRepository: preparationItemRepository,
+            subjectRepository: subjectRepository
+        )
+        self.getStudyNowRecommendationUseCase = GetStudyNowRecommendationUseCase(
+            getPriorityAssessmentsUseCase: priorityAssessmentsUseCase,
+            calculatePriorityUseCase: calcPriority
+        )
+        self.updateAssessmentProgressUseCase = UpdateAssessmentProgressUseCase(
+            assessmentRepository: assessmentRepository
+        )
+    }
+
+    // MARK: - Stored Unified ViewModels (One source of truth per container)
+    public private(set) lazy var dashboardViewModel: DashboardViewModel = {
+        DashboardViewModel(
             getPriorityAssessmentsUseCase: getPriorityAssessmentsUseCase,
             getNextClassUseCase: getNextClassUseCase,
             getClassPreparationUseCase: getClassPreparationUseCase,
-            calculatePriorityUseCase: calculatePriorityUseCase
+            calculatePriorityUseCase: calculatePriorityUseCase,
+            getSubjectsUseCase: getSubjectsUseCase
         )
+    }()
+
+    public private(set) lazy var assessmentsViewModel: AssessmentsViewModel = {
+        AssessmentsViewModel(
+            getPriorityAssessmentsUseCase: getPriorityAssessmentsUseCase,
+            calculatePriorityUseCase: calculatePriorityUseCase,
+            createAssessmentUseCase: createAssessmentUseCase,
+            toggleTaskCompletionUseCase: toggleTaskCompletionUseCase,
+            createTaskUseCase: createTaskUseCase,
+            getSubjectsUseCase: getSubjectsUseCase,
+            createSubjectUseCase: createSubjectUseCase,
+            updateAssessmentProgressUseCase: updateAssessmentProgressUseCase
+        )
+    }()
+
+    public private(set) lazy var classesViewModel: ClassesViewModel = {
+        ClassesViewModel(
+            getAllClassesUseCase: getAllClassesUseCase,
+            createClassSessionUseCase: createClassSessionUseCase,
+            toggleTaskCompletionUseCase: toggleTaskCompletionUseCase,
+            createTaskUseCase: createTaskUseCase,
+            getSubjectsUseCase: getSubjectsUseCase,
+            createSubjectUseCase: createSubjectUseCase
+        )
+    }()
+
+    public private(set) lazy var tasksViewModel: TasksViewModel = {
+        TasksViewModel(
+            assessmentRepository: assessmentRepository,
+            classSessionRepository: classSessionRepository,
+            subjectRepository: subjectRepository,
+            toggleTaskCompletionUseCase: toggleTaskCompletionUseCase,
+            createTaskUseCase: createTaskUseCase
+        )
+    }()
+
+    public private(set) lazy var studyNowViewModel: StudyNowViewModel = {
+        StudyNowViewModel(
+            getStudyNowRecommendationUseCase: getStudyNowRecommendationUseCase,
+            subjectRepository: subjectRepository,
+            toggleTaskCompletionUseCase: toggleTaskCompletionUseCase
+        )
+    }()
+
+    public private(set) lazy var groupWorkViewModel: GroupWorkViewModel = {
+        GroupWorkViewModel(
+            groupProjectRepository: groupProjectRepository,
+            subjectRepository: subjectRepository
+        )
+    }()
+
+    public private(set) lazy var myProgressViewModel: MyProgressViewModel = {
+        MyProgressViewModel(
+            calculateAcademicProgressUseCase: calculateAcademicProgressUseCase
+        )
+    }()
+
+    public private(set) lazy var remindersViewModel: RemindersViewModel = {
+        RemindersViewModel(
+            assessmentRepository: assessmentRepository,
+            classSessionRepository: classSessionRepository,
+            preparationItemRepository: preparationItemRepository,
+            subjectRepository: subjectRepository
+        )
+    }()
+
+    public private(set) lazy var classPreparationViewModel: ClassPreparationViewModel = {
+        ClassPreparationViewModel(
+            getClassPreparationUseCase: getClassPreparationUseCase
+        )
+    }()
+
+    // MARK: - Factory Methods
+    /// Creates and configures a `DashboardViewModel`.
+    public func makeDashboardViewModel() -> DashboardViewModel {
+        dashboardViewModel
+    }
+
+    /// Creates and configures an `AssessmentsViewModel`.
+    public func makeAssessmentsViewModel() -> AssessmentsViewModel {
+        assessmentsViewModel
+    }
+
+    /// Creates and configures a `ClassesViewModel`.
+    public func makeClassesViewModel() -> ClassesViewModel {
+        classesViewModel
+    }
+
+    /// Creates and configures a `TasksViewModel`.
+    public func makeTasksViewModel() -> TasksViewModel {
+        tasksViewModel
+    }
+
+    /// Creates and configures a `StudyNowViewModel`.
+    public func makeStudyNowViewModel() -> StudyNowViewModel {
+        studyNowViewModel
+    }
+
+    /// Creates and configures a `GroupWorkViewModel`.
+    public func makeGroupWorkViewModel() -> GroupWorkViewModel {
+        groupWorkViewModel
+    }
+
+    /// Creates and configures a `MyProgressViewModel`.
+    public func makeMyProgressViewModel() -> MyProgressViewModel {
+        myProgressViewModel
+    }
+
+    /// Creates and configures a `RemindersViewModel`.
+    public func makeRemindersViewModel() -> RemindersViewModel {
+        remindersViewModel
+    }
+
+    /// Creates and configures a `ClassPreparationViewModel`.
+    public func makeClassPreparationViewModel() -> ClassPreparationViewModel {
+        classPreparationViewModel
     }
 }

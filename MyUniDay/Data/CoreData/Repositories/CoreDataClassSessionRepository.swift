@@ -16,6 +16,15 @@ public final class CoreDataClassSessionRepository: ClassSessionRepositoryProtoco
         self.context = context
     }
 
+    public func fetchAllClassSessions() async throws -> [ClassSession] {
+        try await context.perform {
+            let request: NSFetchRequest<ClassSessionEntity> = ClassSessionEntity.fetchRequest()
+            request.sortDescriptors = [NSSortDescriptor(keyPath: \ClassSessionEntity.startDate, ascending: true)]
+            let results = try self.context.fetch(request)
+            return results.map { $0.toDomain() }
+        }
+    }
+
     public func fetchClassSessions(forSubjectId subjectId: UUID) async throws -> [ClassSession] {
         try await context.perform {
             let request: NSFetchRequest<ClassSessionEntity> = ClassSessionEntity.fetchRequest()

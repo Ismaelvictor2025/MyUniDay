@@ -16,6 +16,15 @@ public final class CoreDataPreparationItemRepository: PreparationItemRepositoryP
         self.context = context
     }
 
+    public func fetchAllPreparationItems() async throws -> [PreparationItem] {
+        try await context.perform {
+            let request: NSFetchRequest<PreparationItemEntity> = PreparationItemEntity.fetchRequest()
+            request.sortDescriptors = [NSSortDescriptor(keyPath: \PreparationItemEntity.orderIndex, ascending: true)]
+            let results = try self.context.fetch(request)
+            return results.map { $0.toDomain() }
+        }
+    }
+
     public func fetchPreparationItems(forSessionId sessionId: UUID) async throws -> [PreparationItem] {
         try await context.perform {
             let request: NSFetchRequest<PreparationItemEntity> = PreparationItemEntity.fetchRequest()

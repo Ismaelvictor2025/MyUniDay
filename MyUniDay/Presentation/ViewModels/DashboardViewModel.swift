@@ -23,6 +23,7 @@ public final class DashboardViewModel {
     private let getNextClassUseCase: GetNextClassUseCase
     private let getClassPreparationUseCase: GetClassPreparationUseCase
     private let calculatePriorityUseCase: CalculateAssessmentPriorityUseCase
+    private let getSubjectsUseCase: GetSubjectsUseCase?
 
     // MARK: - Presentation State
     /// Incomplete assessments paired with their calculated priority classifications.
@@ -36,6 +37,15 @@ public final class DashboardViewModel {
 
     /// Preparation items required for the next upcoming class session.
     public private(set) var nextClassPreparationItems: [PreparationItem] = []
+
+    /// Subjects keyed by ID for contextual card display.
+    public private(set) var subjectsById: [UUID: UniversitySubject] = [:]
+
+    /// Subject corresponding to the upcoming class session.
+    public var nextClassSubject: UniversitySubject? {
+        guard let subjectId = nextClass?.subjectId else { return nil }
+        return subjectsById[subjectId]
+    }
 
     /// Indicates whether a load or refresh operation is in progress.
     public private(set) var isLoading: Bool = false
@@ -51,17 +61,38 @@ public final class DashboardViewModel {
     ///   - getNextClassUseCase: Use case for retrieving the next class session.
     ///   - getClassPreparationUseCase: Use case for retrieving class preparation items.
     ///   - calculatePriorityUseCase: Use case for pairing assessments with their priority (defaults to a new instance).
+    ///   - getSubjectsUseCase: Optional use case for retrieving enrolled university subjects.
     public init(
         getPriorityAssessmentsUseCase: GetPriorityAssessmentsUseCase,
         getNextClassUseCase: GetNextClassUseCase,
         getClassPreparationUseCase: GetClassPreparationUseCase,
-        calculatePriorityUseCase: CalculateAssessmentPriorityUseCase = CalculateAssessmentPriorityUseCase()
+        calculatePriorityUseCase: CalculateAssessmentPriorityUseCase = CalculateAssessmentPriorityUseCase(),
+        getSubjectsUseCase: GetSubjectsUseCase? = nil
     ) {
         self.getPriorityAssessmentsUseCase = getPriorityAssessmentsUseCase
         self.getNextClassUseCase = getNextClassUseCase
         self.getClassPreparationUseCase = getClassPreparationUseCase
         self.calculatePriorityUseCase = calculatePriorityUseCase
+        self.getSubjectsUseCase = getSubjectsUseCase
+
+        self.dataObserver = NotificationCenter.default.addObserver(
+            forName: .academicDataDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { [weak self] in
+                await self?.loadDashboard()
+            }
+        }
     }
+
+    deinit {
+        if let observer = dataObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+    }
+
+    private nonisolated(unsafe) var dataObserver: (any NSObjectProtocol)?
 
     // MARK: - Actions
     /// Loads dashboard data coordinated across the injected use cases.
@@ -74,8 +105,13 @@ public final class DashboardViewModel {
         do {
             async let assessmentsTask = getPriorityAssessmentsUseCase.execute(relativeTo: referenceDate)
             async let nextClassTask = getNextClassUseCase.execute(relativeTo: referenceDate)
+            async let subjectsTask = getSubjectsUseCase?.execute() ?? []
 
-            let (fetchedAssessments, fetchedNextClass) = try await (assessmentsTask, nextClassTask)
+            let (fetchedAssessments, fetchedNextClass, fetchedSubjects) = try await (assessmentsTask, nextClassTask, subjectsTask)
+
+            var map: [UUID: UniversitySubject] = [:]
+            for s in fetchedSubjects { map[s.id] = s }
+            self.subjectsById = map
 
             self.priorityAssessments = fetchedAssessments
             self.prioritisedAssessments = fetchedAssessments.map { assessment in

@@ -11,6 +11,11 @@ import Foundation
 ///
 /// Designed to support upcoming priority calculation and dashboard queries.
 public protocol AssessmentRepositoryProtocol: Sendable {
+    /// Retrieves all assessments across all subjects.
+    ///
+    /// - Returns: An array of `Assessment` models.
+    func fetchAllAssessments() async throws -> [Assessment]
+
     /// Retrieves all assessments for a specific subject.
     ///
     /// - Parameter subjectId: The UUID of the parent subject.
@@ -43,4 +48,10 @@ public protocol AssessmentRepositoryProtocol: Sendable {
     ///
     /// - Parameter id: The UUID of the assessment to delete.
     func deleteAssessment(by id: UUID) async throws
+}
+
+public extension AssessmentRepositoryProtocol {
+    func fetchAllAssessments() async throws -> [Assessment] {
+        try await fetchIncompleteAssessments(dueBetween: .distantPast, and: .distantFuture)
+    }
 }

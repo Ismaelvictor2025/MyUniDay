@@ -30,26 +30,16 @@ public enum QuickActionType: String, Identifiable {
         case .addClass: return .indigo
         }
     }
-
-    public var description: String {
-        switch self {
-        case .addAssessment:
-            return "Quick-creation for new assignments and exams will be available in the dedicated Assessments feature stage."
-        case .addTask:
-            return "Milestone task creation will be integrated directly into your assessment workflows."
-        case .addClass:
-            return "Timetable class scheduling workflows will be added in the Timetable feature milestone."
-        }
-    }
 }
 
 /// Visual row of shortcuts providing quick entry points for student activities.
-///
-/// Clearly communicates that persistence creation workflows belong to subsequent stages.
 public struct QuickActionsSection: View {
-    @State private var selectedAction: QuickActionType?
+    public var onSelectAction: ((QuickActionType) -> Void)?
+    @State private var fallbackAction: QuickActionType?
 
-    public init() {}
+    public init(onSelectAction: ((QuickActionType) -> Void)? = nil) {
+        self.onSelectAction = onSelectAction
+    }
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -70,16 +60,17 @@ public struct QuickActionsSection: View {
                 quickActionButton(type: .addClass)
             }
         }
-        .sheet(item: $selectedAction) { action in
-            actionDetailSheet(action: action)
-        }
     }
 
     // MARK: - Subviews
 
     private func quickActionButton(type: QuickActionType) -> some View {
         Button {
-            selectedAction = type
+            if let onSelectAction = onSelectAction {
+                onSelectAction(type)
+            } else {
+                fallbackAction = type
+            }
         } label: {
             VStack(spacing: 8) {
                 Image(systemName: type.iconName)
@@ -102,59 +93,6 @@ public struct QuickActionsSection: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Add \(type.rawValue)")
-    }
-
-    private func actionDetailSheet(action: QuickActionType) -> some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                Image(systemName: action.iconName)
-                    .font(.system(size: 56))
-                    .foregroundColor(action.tintColor)
-                    .padding(.top, 24)
-
-                Text("Add \(action.rawValue)")
-                    .font(.title2)
-                    .fontWeight(.bold)
-
-                Text(action.description)
-                    .font(.body)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 24)
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Label("Stage 4 Focus: Dashboard Presentation", systemImage: "info.circle.fill")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    Label("Persistence Creation: Upcoming Milestones", systemImage: "clock.fill")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                .padding()
-                .background(Color(.secondarySystemBackground))
-                .cornerRadius(12)
-                .padding(.horizontal, 20)
-
-                Spacer()
-
-                Button("Got it") {
-                    selectedAction = nil
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .padding(.horizontal, 24)
-                .padding(.bottom, 20)
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Close") {
-                        selectedAction = nil
-                    }
-                }
-            }
-        }
-        .presentationDetents([.medium])
     }
 }
 

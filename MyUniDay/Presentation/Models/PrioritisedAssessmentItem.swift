@@ -6,12 +6,13 @@
 //
 
 import Foundation
+import SwiftUI
 
 /// Presentation wrapper pairing an `Assessment` domain model with its computed `AssessmentPriority`.
 ///
 /// Avoids duplicating domain assessment properties while providing the presentation layer
 /// with precomputed, UI-ready priority information.
-public struct PrioritisedAssessmentItem: Identifiable, Equatable, Sendable {
+public struct PrioritisedAssessmentItem: Identifiable, Equatable, Hashable, Sendable {
     /// Identifier delegating directly to the underlying assessment ID.
     public var id: UUID { assessment.id }
 
@@ -29,5 +30,25 @@ public struct PrioritisedAssessmentItem: Identifiable, Equatable, Sendable {
     public init(assessment: Assessment, priority: AssessmentPriority) {
         self.assessment = assessment
         self.priority = priority
+    }
+}
+
+public extension AssessmentPriority {
+    var iconName: String {
+        switch self {
+        case .critical: return "exclamationmark.octagon.fill"
+        case .high: return "exclamationmark.triangle.fill"
+        case .medium: return "clock.fill"
+        case .low: return "checkmark.circle"
+        }
+    }
+
+    var badgeColor: Color {
+        switch self {
+        case .critical: return .red
+        case .high: return .orange
+        case .medium: return .blue
+        case .low: return .green
+        }
     }
 }
