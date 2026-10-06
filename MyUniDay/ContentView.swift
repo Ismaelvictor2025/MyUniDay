@@ -23,6 +23,8 @@ struct ContentView: View {
     private let container: AppDependencyContainer = AppDependencyContainer.shared
     #endif
 
+    @Environment(\.scenePhase) private var scenePhase
+
     var body: some View {
         #if DEBUG
         MainTabView(
@@ -35,11 +37,34 @@ struct ContentView: View {
                 } else {
                     container = AppDependencyContainer.shared
                 }
+                Task {
+                    try? await container.updateWidgetSnapshotUseCase.execute()
+                }
             }
         )
         .id(isDemoMode) // Ensures clean view recreation upon mode switch
+        .task {
+            try? await container.updateWidgetSnapshotUseCase.execute()
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active || newPhase == .background {
+                Task {
+                    try? await container.updateWidgetSnapshotUseCase.execute()
+                }
+            }
+        }
         #else
         MainTabView(container: container)
+            .task {
+                try? await container.updateWidgetSnapshotUseCase.execute()
+            }
+            .onChange(of: scenePhase) { _, newPhase in
+                if newPhase == .active || newPhase == .background {
+                    Task {
+                        try? await container.updateWidgetSnapshotUseCase.execute()
+                    }
+                }
+            }
         #endif
     }
 }

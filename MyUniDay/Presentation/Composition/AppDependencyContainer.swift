@@ -40,6 +40,17 @@ public final class AppDependencyContainer {
     public let calculateAcademicProgressUseCase: CalculateAcademicProgressUseCase
     public let getStudyNowRecommendationUseCase: GetStudyNowRecommendationUseCase
     public let updateAssessmentProgressUseCase: UpdateAssessmentProgressUseCase
+    public let updateWidgetSnapshotUseCase: UpdateWidgetSnapshotUseCase
+    public let scheduleAssessmentReminderUseCase: ScheduleAssessmentReminderUseCase
+    public let getGroupProjectsUseCase: GetGroupProjectsUseCase
+    public let saveGroupProjectUseCase: SaveGroupProjectUseCase
+    public let deleteGroupProjectUseCase: DeleteGroupProjectUseCase
+    public let toggleGroupTaskUseCase: ToggleGroupTaskUseCase
+    public let manageGroupDeliverablesUseCase: ManageGroupDeliverablesUseCase
+    public let getStudentRemindersUseCase: GetStudentRemindersUseCase
+    public let getStudentTasksUseCase: GetStudentTasksUseCase
+
+    private nonisolated(unsafe) var widgetObserver: (any NSObjectProtocol)?
 
     /// Initializes the composition container with Core Data persistence.
     ///
@@ -90,6 +101,39 @@ public final class AppDependencyContainer {
         self.updateAssessmentProgressUseCase = UpdateAssessmentProgressUseCase(
             assessmentRepository: self.assessmentRepository
         )
+        self.updateWidgetSnapshotUseCase = UpdateWidgetSnapshotUseCase(
+            getPriorityAssessmentsUseCase: priorityAssessmentsUseCase,
+            calculatePriorityUseCase: calcPriority,
+            getNextClassUseCase: self.getNextClassUseCase,
+            subjectRepository: self.subjectRepository
+        )
+        self.scheduleAssessmentReminderUseCase = ScheduleAssessmentReminderUseCase(
+            getPriorityAssessmentsUseCase: priorityAssessmentsUseCase,
+            calculatePriorityUseCase: calcPriority,
+            subjectRepository: self.subjectRepository
+        )
+        self.getGroupProjectsUseCase = GetGroupProjectsUseCase(groupProjectRepository: self.groupProjectRepository)
+        self.saveGroupProjectUseCase = SaveGroupProjectUseCase(groupProjectRepository: self.groupProjectRepository)
+        self.deleteGroupProjectUseCase = DeleteGroupProjectUseCase(groupProjectRepository: self.groupProjectRepository)
+        self.toggleGroupTaskUseCase = ToggleGroupTaskUseCase(groupProjectRepository: self.groupProjectRepository)
+        self.manageGroupDeliverablesUseCase = ManageGroupDeliverablesUseCase(groupProjectRepository: self.groupProjectRepository)
+        self.getStudentRemindersUseCase = GetStudentRemindersUseCase(
+            assessmentRepository: self.assessmentRepository,
+            classSessionRepository: self.classSessionRepository,
+            preparationItemRepository: self.preparationItemRepository,
+            subjectRepository: self.subjectRepository
+        )
+        self.getStudentTasksUseCase = GetStudentTasksUseCase(
+            assessmentRepository: self.assessmentRepository,
+            classSessionRepository: self.classSessionRepository,
+            subjectRepository: self.subjectRepository
+        )
+
+        setupWidgetSyncObserver()
+        performInitialWidgetSync()
+        Task { [scheduleAssessmentReminderUseCase] in
+            await scheduleAssessmentReminderUseCase.registerCategory()
+        }
     }
 
     /// Initializes the composition container with custom/mock repositories (useful for testing and demo mode).
@@ -141,6 +185,64 @@ public final class AppDependencyContainer {
         self.updateAssessmentProgressUseCase = UpdateAssessmentProgressUseCase(
             assessmentRepository: assessmentRepository
         )
+        self.updateWidgetSnapshotUseCase = UpdateWidgetSnapshotUseCase(
+            getPriorityAssessmentsUseCase: priorityAssessmentsUseCase,
+            calculatePriorityUseCase: calcPriority,
+            getNextClassUseCase: self.getNextClassUseCase,
+            subjectRepository: self.subjectRepository
+        )
+        self.scheduleAssessmentReminderUseCase = ScheduleAssessmentReminderUseCase(
+            getPriorityAssessmentsUseCase: priorityAssessmentsUseCase,
+            calculatePriorityUseCase: calcPriority,
+            subjectRepository: subjectRepository
+        )
+        let gpRepo = self.groupProjectRepository
+        self.getGroupProjectsUseCase = GetGroupProjectsUseCase(groupProjectRepository: gpRepo)
+        self.saveGroupProjectUseCase = SaveGroupProjectUseCase(groupProjectRepository: gpRepo)
+        self.deleteGroupProjectUseCase = DeleteGroupProjectUseCase(groupProjectRepository: gpRepo)
+        self.toggleGroupTaskUseCase = ToggleGroupTaskUseCase(groupProjectRepository: gpRepo)
+        self.manageGroupDeliverablesUseCase = ManageGroupDeliverablesUseCase(groupProjectRepository: gpRepo)
+        self.getStudentRemindersUseCase = GetStudentRemindersUseCase(
+            assessmentRepository: assessmentRepository,
+            classSessionRepository: classSessionRepository,
+            preparationItemRepository: preparationItemRepository,
+            subjectRepository: subjectRepository
+        )
+        self.getStudentTasksUseCase = GetStudentTasksUseCase(
+            assessmentRepository: assessmentRepository,
+            classSessionRepository: classSessionRepository,
+            subjectRepository: subjectRepository
+        )
+
+        setupWidgetSyncObserver()
+        performInitialWidgetSync()
+        Task { [scheduleAssessmentReminderUseCase] in
+            await scheduleAssessmentReminderUseCase.registerCategory()
+        }
+    }
+
+    public func performInitialWidgetSync() {
+        Task { @MainActor [weak self] in
+            try? await self?.updateWidgetSnapshotUseCase.execute()
+        }
+    }
+
+    private func setupWidgetSyncObserver() {
+        self.widgetObserver = NotificationCenter.default.addObserver(
+            forName: .academicDataDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                try? await self?.updateWidgetSnapshotUseCase.execute()
+            }
+        }
+    }
+
+    deinit {
+        if let observer = widgetObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
     }
 
     // MARK: - Stored Unified ViewModels (One source of truth per container)
@@ -150,7 +252,12 @@ public final class AppDependencyContainer {
             getNextClassUseCase: getNextClassUseCase,
             getClassPreparationUseCase: getClassPreparationUseCase,
             calculatePriorityUseCase: calculatePriorityUseCase,
-            getSubjectsUseCase: getSubjectsUseCase
+            getSubjectsUseCase: getSubjectsUseCase,
+            createAssessmentUseCase: createAssessmentUseCase,
+            createClassSessionUseCase: createClassSessionUseCase,
+            createTaskUseCase: createTaskUseCase,
+            createSubjectUseCase: createSubjectUseCase,
+            getStudentTasksUseCase: getStudentTasksUseCase
         )
     }()
 
@@ -180,9 +287,7 @@ public final class AppDependencyContainer {
 
     public private(set) lazy var tasksViewModel: TasksViewModel = {
         TasksViewModel(
-            assessmentRepository: assessmentRepository,
-            classSessionRepository: classSessionRepository,
-            subjectRepository: subjectRepository,
+            getStudentTasksUseCase: getStudentTasksUseCase,
             toggleTaskCompletionUseCase: toggleTaskCompletionUseCase,
             createTaskUseCase: createTaskUseCase
         )
@@ -198,8 +303,12 @@ public final class AppDependencyContainer {
 
     public private(set) lazy var groupWorkViewModel: GroupWorkViewModel = {
         GroupWorkViewModel(
-            groupProjectRepository: groupProjectRepository,
-            subjectRepository: subjectRepository
+            getGroupProjectsUseCase: getGroupProjectsUseCase,
+            saveGroupProjectUseCase: saveGroupProjectUseCase,
+            deleteGroupProjectUseCase: deleteGroupProjectUseCase,
+            toggleGroupTaskUseCase: toggleGroupTaskUseCase,
+            manageGroupDeliverablesUseCase: manageGroupDeliverablesUseCase,
+            getSubjectsUseCase: getSubjectsUseCase
         )
     }()
 
@@ -211,10 +320,8 @@ public final class AppDependencyContainer {
 
     public private(set) lazy var remindersViewModel: RemindersViewModel = {
         RemindersViewModel(
-            assessmentRepository: assessmentRepository,
-            classSessionRepository: classSessionRepository,
-            preparationItemRepository: preparationItemRepository,
-            subjectRepository: subjectRepository
+            getStudentRemindersUseCase: getStudentRemindersUseCase,
+            scheduleAssessmentReminderUseCase: scheduleAssessmentReminderUseCase
         )
     }()
 

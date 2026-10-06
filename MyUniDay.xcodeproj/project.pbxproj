@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		16174F18306F49B8007EEDF6 /* MyUniDayWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 16174F11306F49B8007EEDF6 /* MyUniDayWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		16174F28306F49B8007EEDF6 /* MyUniDayNotificationContent.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 16174F21306F49B8007EEDF6 /* MyUniDayNotificationContent.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		16174EE6306F49B8007EEDF6 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -21,12 +26,43 @@
 			remoteGlobalIDString = 16174ED2306F49B6007EEDF6;
 			remoteInfo = MyUniDay;
 		};
+		16174F10306F49B8007EEDF6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 16174ECB306F49B6007EEDF6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 16174F14306F49B8007EEDF6;
+			remoteInfo = MyUniDayWidget;
+		};
+		16174F20306F49B8007EEDF6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 16174ECB306F49B6007EEDF6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 16174F24306F49B8007EEDF6;
+			remoteInfo = MyUniDayNotificationContent;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		16174F17306F49B8007EEDF6 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				16174F18306F49B8007EEDF6 /* MyUniDayWidget.appex in Embed Foundation Extensions */,
+				16174F28306F49B8007EEDF6 /* MyUniDayNotificationContent.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		16174ED3306F49B6007EEDF6 /* MyUniDay.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MyUniDay.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		16174EE5306F49B8007EEDF6 /* MyUniDayTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MyUniDayTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		16174EEF306F49B8007EEDF6 /* MyUniDayUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MyUniDayUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		16174F11306F49B8007EEDF6 /* MyUniDayWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MyUniDayWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		16174F21306F49B8007EEDF6 /* MyUniDayNotificationContent.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MyUniDayNotificationContent.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -43,6 +79,16 @@
 		16174EF2306F49B8007EEDF6 /* MyUniDayUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = MyUniDayUITests;
+			sourceTree = "<group>";
+		};
+		16174F12306F49B8007EEDF6 /* MyUniDayWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = MyUniDayWidget;
+			sourceTree = "<group>";
+		};
+		16174F22306F49B8007EEDF6 /* MyUniDayNotificationContent */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = MyUniDayNotificationContent;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -69,6 +115,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		16174F13306F49B8007EEDF6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		16174F23306F49B8007EEDF6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -78,6 +138,8 @@
 				16174ED5306F49B6007EEDF6 /* MyUniDay */,
 				16174EE8306F49B8007EEDF6 /* MyUniDayTests */,
 				16174EF2306F49B8007EEDF6 /* MyUniDayUITests */,
+				16174F12306F49B8007EEDF6 /* MyUniDayWidget */,
+				16174F22306F49B8007EEDF6 /* MyUniDayNotificationContent */,
 				16174ED4306F49B6007EEDF6 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -88,6 +150,8 @@
 				16174ED3306F49B6007EEDF6 /* MyUniDay.app */,
 				16174EE5306F49B8007EEDF6 /* MyUniDayTests.xctest */,
 				16174EEF306F49B8007EEDF6 /* MyUniDayUITests.xctest */,
+				16174F11306F49B8007EEDF6 /* MyUniDayWidget.appex */,
+				16174F21306F49B8007EEDF6 /* MyUniDayNotificationContent.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -102,10 +166,13 @@
 				16174ECF306F49B6007EEDF6 /* Sources */,
 				16174ED0306F49B6007EEDF6 /* Frameworks */,
 				16174ED1306F49B6007EEDF6 /* Resources */,
+				16174F17306F49B8007EEDF6 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				16174F19306F49B8007EEDF6 /* PBXTargetDependency */,
+				16174F29306F49B8007EEDF6 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				16174ED5306F49B6007EEDF6 /* MyUniDay */,
@@ -155,6 +222,8 @@
 			);
 			fileSystemSynchronizedGroups = (
 				16174EF2306F49B8007EEDF6 /* MyUniDayUITests */,
+				16174F12306F49B8007EEDF6 /* MyUniDayWidget */,
+				16174F22306F49B8007EEDF6 /* MyUniDayNotificationContent */,
 			);
 			name = MyUniDayUITests;
 			packageProductDependencies = (
@@ -162,6 +231,50 @@
 			productName = MyUniDayUITests;
 			productReference = 16174EEF306F49B8007EEDF6 /* MyUniDayUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		16174F14306F49B8007EEDF6 /* MyUniDayWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 16174F1C306F49B8007EEDF6 /* Build configuration list for PBXNativeTarget "MyUniDayWidget" */;
+			buildPhases = (
+				16174F16306F49B8007EEDF6 /* Sources */,
+				16174F13306F49B8007EEDF6 /* Frameworks */,
+				16174F15306F49B8007EEDF6 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				16174F12306F49B8007EEDF6 /* MyUniDayWidget */,
+			);
+			name = MyUniDayWidget;
+			packageProductDependencies = (
+			);
+			productName = MyUniDayWidget;
+			productReference = 16174F11306F49B8007EEDF6 /* MyUniDayWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		16174F24306F49B8007EEDF6 /* MyUniDayNotificationContent */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 16174F2C306F49B8007EEDF6 /* Build configuration list for PBXNativeTarget "MyUniDayNotificationContent" */;
+			buildPhases = (
+				16174F26306F49B8007EEDF6 /* Sources */,
+				16174F23306F49B8007EEDF6 /* Frameworks */,
+				16174F25306F49B8007EEDF6 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				16174F22306F49B8007EEDF6 /* MyUniDayNotificationContent */,
+			);
+			name = MyUniDayNotificationContent;
+			packageProductDependencies = (
+			);
+			productName = MyUniDayNotificationContent;
+			productReference = 16174F21306F49B8007EEDF6 /* MyUniDayNotificationContent.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -184,6 +297,12 @@
 						CreatedOnToolsVersion = 26.6;
 						TestTargetID = 16174ED2306F49B6007EEDF6;
 					};
+					16174F14306F49B8007EEDF6 = {
+						CreatedOnToolsVersion = 26.6;
+					};
+					16174F24306F49B8007EEDF6 = {
+						CreatedOnToolsVersion = 26.6;
+					};
 				};
 			};
 			buildConfigurationList = 16174ECE306F49B6007EEDF6 /* Build configuration list for PBXProject "MyUniDay" */;
@@ -203,6 +322,8 @@
 				16174ED2306F49B6007EEDF6 /* MyUniDay */,
 				16174EE4306F49B8007EEDF6 /* MyUniDayTests */,
 				16174EEE306F49B8007EEDF6 /* MyUniDayUITests */,
+				16174F14306F49B8007EEDF6 /* MyUniDayWidget */,
+				16174F24306F49B8007EEDF6 /* MyUniDayNotificationContent */,
 			);
 		};
 /* End PBXProject section */
@@ -223,6 +344,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		16174EED306F49B8007EEDF6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		16174F15306F49B8007EEDF6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		16174F25306F49B8007EEDF6 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -253,6 +388,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		16174F16306F49B8007EEDF6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		16174F26306F49B8007EEDF6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -265,6 +414,16 @@
 			isa = PBXTargetDependency;
 			target = 16174ED2306F49B6007EEDF6 /* MyUniDay */;
 			targetProxy = 16174EF0306F49B8007EEDF6 /* PBXContainerItemProxy */;
+		};
+		16174F19306F49B8007EEDF6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 16174F14306F49B8007EEDF6 /* MyUniDayWidget */;
+			targetProxy = 16174F10306F49B8007EEDF6 /* PBXContainerItemProxy */;
+		};
+		16174F29306F49B8007EEDF6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 16174F24306F49B8007EEDF6 /* MyUniDayNotificationContent */;
+			targetProxy = 16174F20306F49B8007EEDF6 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -393,6 +552,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MyUniDay/MyUniDay.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
@@ -424,6 +584,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MyUniDay/MyUniDay.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
@@ -530,6 +691,140 @@
 			};
 			name = Release;
 		};
+		16174F1A306F49B8007EEDF6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = MyUniDayWidget/MyUniDayWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "MyUniDayWidget-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = MyUniDayWidget;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vicky.MyUniDay.MyUniDayWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		16174F1B306F49B8007EEDF6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = MyUniDayWidget/MyUniDayWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "MyUniDayWidget-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = MyUniDayWidget;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vicky.MyUniDay.MyUniDayWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		16174F2A306F49B8007EEDF6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "MyUniDayNotificationContent-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = MyUniDayNotificationContent;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-framework",
+					UserNotifications,
+					"-framework",
+					UserNotificationsUI,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.vicky.MyUniDay.MyUniDayNotificationContent;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		16174F2B306F49B8007EEDF6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "MyUniDayNotificationContent-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = MyUniDayNotificationContent;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-framework",
+					UserNotifications,
+					"-framework",
+					UserNotificationsUI,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.vicky.MyUniDay.MyUniDayNotificationContent;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -565,6 +860,24 @@
 			buildConfigurations = (
 				16174F00306F49B8007EEDF6 /* Debug */,
 				16174F01306F49B8007EEDF6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		16174F1C306F49B8007EEDF6 /* Build configuration list for PBXNativeTarget "MyUniDayWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				16174F1A306F49B8007EEDF6 /* Debug */,
+				16174F1B306F49B8007EEDF6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		16174F2C306F49B8007EEDF6 /* Build configuration list for PBXNativeTarget "MyUniDayNotificationContent" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				16174F2A306F49B8007EEDF6 /* Debug */,
+				16174F2B306F49B8007EEDF6 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
