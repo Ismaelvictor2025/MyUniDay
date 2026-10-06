@@ -69,7 +69,7 @@ struct Stage5CoreAppTests {
             weighting: 20.0,
             estimatedWorkloadHours: 5.0
         )
-        await #expect(throws: RepositoryError.self) {
+        await #expect(throws: AssessmentCreationError.self) {
             try await container.createAssessmentUseCase.execute(assessment: emptyTitleAssessment, forSubjectId: subjectId)
         }
 
@@ -80,7 +80,7 @@ struct Stage5CoreAppTests {
             weighting: -5.0,
             estimatedWorkloadHours: 5.0
         )
-        await #expect(throws: RepositoryError.self) {
+        await #expect(throws: AssessmentCreationError.self) {
             try await container.createAssessmentUseCase.execute(assessment: negativeWeightAssessment, forSubjectId: subjectId)
         }
 
@@ -91,7 +91,7 @@ struct Stage5CoreAppTests {
             weighting: 105.0,
             estimatedWorkloadHours: 5.0
         )
-        await #expect(throws: RepositoryError.self) {
+        await #expect(throws: AssessmentCreationError.self) {
             try await container.createAssessmentUseCase.execute(assessment: excessiveWeightAssessment, forSubjectId: subjectId)
         }
     }
@@ -143,7 +143,7 @@ struct Stage5CoreAppTests {
             building: "   ",
             room: "Room 1"
         )
-        await #expect(throws: RepositoryError.self) {
+        await #expect(throws: ClassSessionCreationError.self) {
             try await container.createClassSessionUseCase.execute(classSession: missingBuilding, forSubjectId: subjectId)
         }
 
@@ -156,7 +156,7 @@ struct Stage5CoreAppTests {
             building: "Building EA",
             room: "Room 1"
         )
-        await #expect(throws: RepositoryError.self) {
+        await #expect(throws: ClassSessionCreationError.self) {
             try await container.createClassSessionUseCase.execute(classSession: invalidTimes, forSubjectId: subjectId)
         }
     }
@@ -176,7 +176,7 @@ struct Stage5CoreAppTests {
 
         // 2. Blank code
         let blankCode = UniversitySubject(code: "", name: "Test")
-        await #expect(throws: RepositoryError.self) {
+        await #expect(throws: SubjectCreationError.self) {
             try await container.createSubjectUseCase.execute(subject: blankCode)
         }
     }
