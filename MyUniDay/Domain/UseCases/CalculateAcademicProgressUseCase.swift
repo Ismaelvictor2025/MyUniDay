@@ -141,9 +141,17 @@ public final class CalculateAcademicProgressUseCase: Sendable {
     /// Double-counting is strictly avoided: an assessment and its breakdown tasks are never both counted
     /// as independent items.
     public func execute() async throws -> AcademicProgressReport {
-        let assessments = try await assessmentRepository.fetchAllAssessments()
-        let prepItems = try await preparationItemRepository.fetchAllPreparationItems()
-        let subjects = (try? await subjectRepository?.fetchSubjects()) ?? []
+        let assessments: [Assessment]
+        let prepItems: [PreparationItem]
+        let subjects: [UniversitySubject]
+
+        do {
+            assessments = try await assessmentRepository.fetchAllAssessments()
+            prepItems = try await preparationItemRepository.fetchAllPreparationItems()
+            subjects = (try? await subjectRepository?.fetchSubjects()) ?? []
+        } catch {
+            throw AcademicProgressError.calculationFailed(reason: error.localizedDescription)
+        }
 
         // 1. Assessment metrics
         let totalAssessments = assessments.count

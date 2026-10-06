@@ -268,7 +268,7 @@ public struct CreateGroupProjectView: View {
             )
             dismiss()
         } catch {
-            validationError = error.localizedDescription
+            validationError = (error as? LocalizedError)?.errorDescription ?? "That group project could not be saved. Please check the details and try again."
             isSaving = false
         }
     }

@@ -24,20 +24,24 @@ public final class GetNextClassUseCase: Sendable {
     /// - Parameter referenceDate: The reference timestamp to evaluate upcoming classes against (defaults to current date).
     /// - Returns: The earliest upcoming `ClassSession` starting at or after `referenceDate`, or `nil` if none are scheduled.
     public func execute(relativeTo referenceDate: Date = Date()) async throws -> ClassSession? {
-        let upcomingSessions = try await classSessionRepository.fetchUpcomingClassSessions(from: referenceDate)
+        do {
+            let upcomingSessions = try await classSessionRepository.fetchUpcomingClassSessions(from: referenceDate)
 
-        // Strict filter: ensure the session starts at or after the reference timestamp
-        let futureSessions = upcomingSessions.filter { $0.startDate >= referenceDate }
+            // Strict filter: ensure the session starts at or after the reference timestamp
+            let futureSessions = upcomingSessions.filter { $0.startDate >= referenceDate }
 
-        // Return the earliest upcoming class
-        return futureSessions.min(by: { lhs, rhs in
-            if lhs.startDate != rhs.startDate {
-                return lhs.startDate < rhs.startDate
-            }
-            if lhs.endDate != rhs.endDate {
-                return lhs.endDate < rhs.endDate
-            }
-            return lhs.room < rhs.room
-        })
+            // Return the earliest upcoming class
+            return futureSessions.min(by: { lhs, rhs in
+                if lhs.startDate != rhs.startDate {
+                    return lhs.startDate < rhs.startDate
+                }
+                if lhs.endDate != rhs.endDate {
+                    return lhs.endDate < rhs.endDate
+                }
+                return lhs.room < rhs.room
+            })
+        } catch {
+            throw NextClassError.scheduleUnavailable(reason: error.localizedDescription)
+        }
     }
 }

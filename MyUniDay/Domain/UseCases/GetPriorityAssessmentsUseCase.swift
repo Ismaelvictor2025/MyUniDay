@@ -36,19 +36,23 @@ public final class GetPriorityAssessmentsUseCase: Sendable {
         relativeTo referenceDate: Date = Date(),
         maxDueDate: Date = .distantFuture
     ) async throws -> [Assessment] {
-        var fetched = try await assessmentRepository.fetchIncompleteAssessments(
-            dueBetween: .distantPast,
-            and: maxDueDate
-        )
+        do {
+            var fetched = try await assessmentRepository.fetchIncompleteAssessments(
+                dueBetween: .distantPast,
+                and: maxDueDate
+            )
 
-        // Safety fallback: if query returned nothing, verify against all assessments to guarantee
-        // no incomplete coursework is missed due to date filter boundary edge cases.
-        if fetched.isEmpty {
-            let all = try await assessmentRepository.fetchAllAssessments()
-            fetched = all.filter { !$0.isCompleted && $0.progress < 0.999 && $0.dueDate <= maxDueDate }
+            // Safety fallback: if query returned nothing, verify against all assessments to guarantee
+            // no incomplete coursework is missed due to date filter boundary edge cases.
+            if fetched.isEmpty {
+                let all = try await assessmentRepository.fetchAllAssessments()
+                fetched = all.filter { !$0.isCompleted && $0.progress < 0.999 && $0.dueDate <= maxDueDate }
+            }
+
+            return orderIncompleteAssessments(fetched, relativeTo: referenceDate)
+        } catch {
+            throw PriorityAssessmentError.assessmentFetchFailed(reason: error.localizedDescription)
         }
-
-        return orderIncompleteAssessments(fetched, relativeTo: referenceDate)
     }
 
     /// Retrieves incomplete assessments for a specific subject, ordered by priority.
@@ -61,8 +65,12 @@ public final class GetPriorityAssessmentsUseCase: Sendable {
         forSubjectId subjectId: UUID,
         relativeTo referenceDate: Date = Date()
     ) async throws -> [Assessment] {
-        let fetched = try await assessmentRepository.fetchAssessments(forSubjectId: subjectId)
-        return orderIncompleteAssessments(fetched, relativeTo: referenceDate)
+        do {
+            let fetched = try await assessmentRepository.fetchAssessments(forSubjectId: subjectId)
+            return orderIncompleteAssessments(fetched, relativeTo: referenceDate)
+        } catch {
+            throw PriorityAssessmentError.assessmentFetchFailed(reason: error.localizedDescription)
+        }
     }
 
     /// Orders a given collection of assessments, filtering out completed ones and applying deterministic tie-breakers.

@@ -161,7 +161,7 @@ public struct AddClassView: View {
             newSubjectCode = ""
             newSubjectName = ""
         } catch {
-            validationError = "Failed to create subject: \(error.localizedDescription)"
+            validationError = (error as? LocalizedError)?.errorDescription ?? "That subject could not be saved. Please check the details and try again."
         }
     }
 
@@ -229,7 +229,7 @@ public struct AddClassView: View {
             )
             dismiss()
         } catch {
-            validationError = error.localizedDescription
+            validationError = (error as? LocalizedError)?.errorDescription ?? "That class could not be saved. Please check the details and try again."
             isSaving = false
         }
     }

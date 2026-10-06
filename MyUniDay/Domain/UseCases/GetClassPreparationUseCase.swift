@@ -27,14 +27,18 @@ public final class GetClassPreparationUseCase: Sendable {
     /// - Parameter sessionId: The unique identifier of the target class session.
     /// - Returns: An array of `PreparationItem` domain models sorted predictably.
     public func execute(forSessionId sessionId: UUID) async throws -> [PreparationItem] {
-        let items = try await preparationItemRepository.fetchPreparationItems(forSessionId: sessionId)
+        do {
+            let items = try await preparationItemRepository.fetchPreparationItems(forSessionId: sessionId)
 
-        // Predictable ordering: by orderIndex first, then alphabetical by title
-        return items.sorted { lhs, rhs in
-            if lhs.orderIndex != rhs.orderIndex {
-                return lhs.orderIndex < rhs.orderIndex
+            // Predictable ordering: by orderIndex first, then alphabetical by title
+            return items.sorted { lhs, rhs in
+                if lhs.orderIndex != rhs.orderIndex {
+                    return lhs.orderIndex < rhs.orderIndex
+                }
+                return lhs.title.localizedCompare(rhs.title) == .orderedAscending
             }
-            return lhs.title.localizedCompare(rhs.title) == .orderedAscending
+        } catch {
+            throw ClassPreparationError.checklistUnavailable(reason: error.localizedDescription)
         }
     }
 

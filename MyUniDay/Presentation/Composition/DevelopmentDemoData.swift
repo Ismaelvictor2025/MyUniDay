@@ -132,7 +132,7 @@ public enum DevelopmentDemoData {
         public var items: [UUID: [PreparationItem]]
         public weak var classSessionRepo: DemoClassSessionRepository?
 
-        public init(items: [UUID: [PreparationItem]], classSessionRepo: DemoClassSessionRepository? = nil) {
+        public init(items: [UUID: [PreparationItem]] = [:], classSessionRepo: DemoClassSessionRepository? = nil) {
             self.items = items
             self.classSessionRepo = classSessionRepo
         }

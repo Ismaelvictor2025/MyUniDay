@@ -125,7 +125,7 @@ public struct EditGroupProjectView: View {
                 dismiss()
             } catch {
                 isSaving = false
-                validationError = error.localizedDescription
+                validationError = (error as? LocalizedError)?.errorDescription ?? "Your changes could not be saved. Please check the details and try again."
             }
         }
     }

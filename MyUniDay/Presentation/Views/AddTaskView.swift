@@ -180,7 +180,7 @@ public struct AddTaskView: View {
             }
             dismiss()
         } catch {
-            validationError = error.localizedDescription
+            validationError = (error as? LocalizedError)?.errorDescription ?? "That task could not be saved. Please check the details and try again."
             isSaving = false
         }
     }

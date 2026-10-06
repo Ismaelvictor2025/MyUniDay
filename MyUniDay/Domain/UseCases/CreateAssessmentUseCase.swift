@@ -21,23 +21,23 @@ public final class CreateAssessmentUseCase: Sendable {
     /// - Parameters:
     ///   - assessment: The assessment domain model to validate and save.
     ///   - subjectId: The UUID of the parent university subject.
-    /// - Throws: `RepositoryError.invalidData` if title is empty or numerical ranges are invalid.
+    /// - Throws: `AssessmentCreationError` if validation fails or persistence fails.
     public func execute(assessment: Assessment, forSubjectId subjectId: UUID) async throws {
         let trimmedTitle = assessment.title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedTitle.isEmpty else {
-            throw RepositoryError.invalidData(reason: "Assessment title cannot be empty.")
+            throw AssessmentCreationError.emptyTitle
         }
 
         guard assessment.weighting >= 0.0 && assessment.weighting <= 100.0 else {
-            throw RepositoryError.invalidData(reason: "Weighting must be between 0% and 100%.")
+            throw AssessmentCreationError.invalidWeighting
         }
 
         guard assessment.progress >= 0.0 && assessment.progress <= 1.0 else {
-            throw RepositoryError.invalidData(reason: "Progress must be between 0.0 and 1.0.")
+            throw AssessmentCreationError.invalidProgress
         }
 
         guard assessment.estimatedWorkloadHours >= 0.0 else {
-            throw RepositoryError.invalidData(reason: "Estimated workload must be non-negative.")
+            throw AssessmentCreationError.invalidWorkload
         }
 
         var validated = assessment
@@ -47,7 +47,11 @@ public final class CreateAssessmentUseCase: Sendable {
         // Synchronize progress with tasks if breakdown tasks exist
         AssessmentProgressCalculator.synchronize(&validated)
 
-        try await assessmentRepository.save(assessment: validated, forSubjectId: subjectId)
-        NotificationCenter.default.post(name: .academicDataDidChange, object: nil)
+        do {
+            try await assessmentRepository.save(assessment: validated, forSubjectId: subjectId)
+            NotificationCenter.default.post(name: .academicDataDidChange, object: nil)
+        } catch {
+            throw AssessmentCreationError.persistenceFailed(reason: error.localizedDescription)
+        }
     }
 }

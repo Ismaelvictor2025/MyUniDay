@@ -299,7 +299,7 @@ public struct AddAssessmentView: View {
             newSubjectCode = ""
             newSubjectName = ""
         } catch {
-            validationError = "Failed to create subject: \(error.localizedDescription)"
+            validationError = (error as? LocalizedError)?.errorDescription ?? "That subject could not be saved. Please check the details and try again."
         }
     }
 
@@ -331,7 +331,7 @@ public struct AddAssessmentView: View {
             )
             dismiss()
         } catch {
-            validationError = error.localizedDescription
+            validationError = (error as? LocalizedError)?.errorDescription ?? "That assessment could not be saved. Please check the details and try again."
             isSaving = false
         }
     }

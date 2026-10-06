@@ -30,11 +30,11 @@ public final class ToggleTaskCompletionUseCase: Sendable {
     @discardableResult
     public func toggleAssessmentTask(taskId: UUID, inAssessmentId assessmentId: UUID) async throws -> Assessment {
         guard var assessment = try await assessmentRepository.fetchAssessment(by: assessmentId) else {
-            throw RepositoryError.notFound(id: assessmentId)
+            throw TaskToggleError.assessmentNotFound
         }
 
         guard let taskIndex = assessment.tasks.firstIndex(where: { $0.id == taskId }) else {
-            throw RepositoryError.notFound(id: taskId)
+            throw TaskToggleError.taskNotFound
         }
 
         assessment.tasks[taskIndex].isCompleted.toggle()
@@ -43,12 +43,16 @@ public final class ToggleTaskCompletionUseCase: Sendable {
         AssessmentProgressCalculator.synchronize(&assessment)
 
         guard let subjectId = assessment.subjectId else {
-            throw RepositoryError.invalidData(reason: "Assessment has no parent subject.")
+            throw TaskToggleError.missingParentSubject
         }
 
-        try await assessmentRepository.save(assessment: assessment, forSubjectId: subjectId)
-        NotificationCenter.default.post(name: .academicDataDidChange, object: nil)
-        return assessment
+        do {
+            try await assessmentRepository.save(assessment: assessment, forSubjectId: subjectId)
+            NotificationCenter.default.post(name: .academicDataDidChange, object: nil)
+            return assessment
+        } catch {
+            throw TaskToggleError.persistenceFailed(reason: error.localizedDescription)
+        }
     }
 
     /// Toggles the completion flag of a `PreparationItem`.
@@ -61,8 +65,12 @@ public final class ToggleTaskCompletionUseCase: Sendable {
     public func togglePreparationItem(item: PreparationItem, inSessionId sessionId: UUID) async throws -> PreparationItem {
         var updated = item
         updated.isCompleted.toggle()
-        try await preparationItemRepository.save(item: updated, forSessionId: sessionId)
-        NotificationCenter.default.post(name: .academicDataDidChange, object: nil)
-        return updated
+        do {
+            try await preparationItemRepository.save(item: updated, forSessionId: sessionId)
+            NotificationCenter.default.post(name: .academicDataDidChange, object: nil)
+            return updated
+        } catch {
+            throw TaskToggleError.persistenceFailed(reason: error.localizedDescription)
+        }
     }
 }

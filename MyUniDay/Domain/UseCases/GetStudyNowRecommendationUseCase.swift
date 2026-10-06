@@ -52,7 +52,12 @@ public final class GetStudyNowRecommendationUseCase: Sendable {
     /// - Parameter referenceDate: The current reference timestamp (defaults to current date).
     /// - Returns: The highest-priority `StudyRecommendation`, or `nil` if no incomplete assessments exist.
     public func execute(relativeTo referenceDate: Date = Date()) async throws -> StudyRecommendation? {
-        let prioritizedList = try await getPriorityAssessmentsUseCase.execute(relativeTo: referenceDate)
+        let prioritizedList: [Assessment]
+        do {
+            prioritizedList = try await getPriorityAssessmentsUseCase.execute(relativeTo: referenceDate)
+        } catch {
+            throw StudyRecommendationError.recommendationUnavailable(reason: error.localizedDescription)
+        }
 
         // Find the first incomplete assessment in the prioritized ordering
         guard let topAssessment = prioritizedList.first(where: { !$0.isCompleted && $0.progress < 0.999 }) else {

@@ -8,12 +8,16 @@
 import Foundation
 import Observation
 
-/// ViewModel managing group projects, team members, deliverables, and automated progress.
+/// ViewModel managing group projects, team members, deliverables, and automated progress via Domain Use Cases.
 @Observable
 @MainActor
 public final class GroupWorkViewModel {
-    private let groupProjectRepository: GroupProjectRepositoryProtocol
-    private let subjectRepository: SubjectRepositoryProtocol?
+    private let getGroupProjectsUseCase: GetGroupProjectsUseCase
+    private let saveGroupProjectUseCase: SaveGroupProjectUseCase
+    private let deleteGroupProjectUseCase: DeleteGroupProjectUseCase
+    private let toggleGroupTaskUseCase: ToggleGroupTaskUseCase
+    private let manageGroupDeliverablesUseCase: ManageGroupDeliverablesUseCase
+    private let getSubjectsUseCase: GetSubjectsUseCase?
 
     public private(set) var projects: [GroupProject] = []
     public private(set) var subjectsById: [UUID: UniversitySubject] = [:]
@@ -22,11 +26,19 @@ public final class GroupWorkViewModel {
     public private(set) var errorMessage: String?
 
     public init(
-        groupProjectRepository: GroupProjectRepositoryProtocol,
-        subjectRepository: SubjectRepositoryProtocol? = nil
+        getGroupProjectsUseCase: GetGroupProjectsUseCase,
+        saveGroupProjectUseCase: SaveGroupProjectUseCase,
+        deleteGroupProjectUseCase: DeleteGroupProjectUseCase,
+        toggleGroupTaskUseCase: ToggleGroupTaskUseCase,
+        manageGroupDeliverablesUseCase: ManageGroupDeliverablesUseCase,
+        getSubjectsUseCase: GetSubjectsUseCase? = nil
     ) {
-        self.groupProjectRepository = groupProjectRepository
-        self.subjectRepository = subjectRepository
+        self.getGroupProjectsUseCase = getGroupProjectsUseCase
+        self.saveGroupProjectUseCase = saveGroupProjectUseCase
+        self.deleteGroupProjectUseCase = deleteGroupProjectUseCase
+        self.toggleGroupTaskUseCase = toggleGroupTaskUseCase
+        self.manageGroupDeliverablesUseCase = manageGroupDeliverablesUseCase
+        self.getSubjectsUseCase = getSubjectsUseCase
     }
 
     /// Loads all persisted group projects and subjects.
@@ -35,8 +47,8 @@ public final class GroupWorkViewModel {
         errorMessage = nil
 
         do {
-            async let projectsTask = groupProjectRepository.fetchAllProjects()
-            async let subjectsTask = subjectRepository?.fetchSubjects() ?? []
+            async let projectsTask = getGroupProjectsUseCase.execute()
+            async let subjectsTask = getSubjectsUseCase?.execute() ?? []
 
             let (fetchedProjects, fetchedSubjects) = try await (projectsTask, subjectsTask)
 
@@ -48,7 +60,7 @@ public final class GroupWorkViewModel {
             self.subjects = fetchedSubjects.sorted { $0.code < $1.code }
             self.projects = fetchedProjects
         } catch {
-            self.errorMessage = "Unable to load group projects."
+            self.errorMessage = "Unable to load group projects. Please try again."
         }
 
         isLoading = false
@@ -65,7 +77,7 @@ public final class GroupWorkViewModel {
     ) async throws {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
-            throw RepositoryError.invalidData(reason: "Project name cannot be empty.")
+            throw GroupProjectError.emptyName
         }
 
         let project = GroupProject(
@@ -78,9 +90,8 @@ public final class GroupWorkViewModel {
             tasks: tasks
         )
 
-        try await groupProjectRepository.save(project: project)
+        _ = try await saveGroupProjectUseCase.execute(project: project)
         await loadProjects()
-        NotificationCenter.default.post(name: .academicDataDidChange, object: nil)
     }
 
     /// Updates an existing group project's metadata while preserving its members, tasks, and progress.
@@ -93,11 +104,11 @@ public final class GroupWorkViewModel {
     ) async throws {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
-            throw RepositoryError.invalidData(reason: "Project name cannot be empty.")
+            throw GroupProjectError.emptyName
         }
 
-        guard var project = try await groupProjectRepository.fetchProject(by: id) else {
-            throw RepositoryError.notFound(id: id)
+        guard var project = try await getGroupProjectsUseCase.execute(byId: id) else {
+            throw GroupProjectError.projectNotFound
         }
 
         project.name = trimmed
@@ -105,17 +116,15 @@ public final class GroupWorkViewModel {
         project.dueDate = dueDate
         project.myRole = myRole.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Member" : myRole
 
-        try await groupProjectRepository.save(project: project)
+        _ = try await saveGroupProjectUseCase.execute(project: project)
         await loadProjects()
-        NotificationCenter.default.post(name: .academicDataDidChange, object: nil)
     }
 
     /// Deletes a group project and cleans up its associated data.
     public func deleteProject(id: UUID) async {
         do {
-            try await groupProjectRepository.deleteProject(by: id)
+            try await deleteGroupProjectUseCase.execute(byId: id)
             await loadProjects()
-            NotificationCenter.default.post(name: .academicDataDidChange, object: nil)
         } catch {
             self.errorMessage = "Failed to delete group project."
         }
@@ -123,13 +132,8 @@ public final class GroupWorkViewModel {
 
     /// Toggles a task completion state and persists the project.
     public func toggleTask(taskId: UUID, inProjectId projectId: UUID) async {
-        guard var project = projects.first(where: { $0.id == projectId }) else { return }
-        guard let taskIndex = project.tasks.firstIndex(where: { $0.id == taskId }) else { return }
-
-        project.tasks[taskIndex].isCompleted.toggle()
-
         do {
-            try await groupProjectRepository.save(project: project)
+            _ = try await toggleGroupTaskUseCase.execute(taskId: taskId, inProjectId: projectId)
             await loadProjects()
         } catch {
             self.errorMessage = "Failed to update group task status."
@@ -143,26 +147,12 @@ public final class GroupWorkViewModel {
         assignedMemberId: UUID? = nil,
         toProjectId projectId: UUID
     ) async throws {
-        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            throw RepositoryError.invalidData(reason: "Task title cannot be empty.")
-        }
-
-        guard var project = try await groupProjectRepository.fetchProject(by: projectId) else {
-            throw RepositoryError.notFound(id: projectId)
-        }
-
-        let task = GroupTask(
-            id: UUID(),
-            title: trimmed,
+        _ = try await manageGroupDeliverablesUseCase.addTask(
+            title: title,
             dueDate: dueDate,
             assignedMemberId: assignedMemberId,
-            isCompleted: false,
-            orderIndex: project.tasks.count
+            toProjectId: projectId
         )
-
-        project.tasks.append(task)
-        try await groupProjectRepository.save(project: project)
         await loadProjects()
     }
 
@@ -175,44 +165,23 @@ public final class GroupWorkViewModel {
         isCompleted: Bool? = nil,
         inProjectId projectId: UUID
     ) async throws {
-        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            throw RepositoryError.invalidData(reason: "Task title cannot be empty.")
-        }
-
-        guard var project = try await groupProjectRepository.fetchProject(by: projectId) else {
-            throw RepositoryError.notFound(id: projectId)
-        }
-
-        guard let taskIndex = project.tasks.firstIndex(where: { $0.id == taskId }) else {
-            throw RepositoryError.notFound(id: taskId)
-        }
-
-        project.tasks[taskIndex].title = trimmed
-        if let dueDate = dueDate {
-            project.tasks[taskIndex].dueDate = dueDate
-        }
-        project.tasks[taskIndex].assignedMemberId = assignedMemberId
-        if let isCompleted = isCompleted {
-            project.tasks[taskIndex].isCompleted = isCompleted
-        }
-
-        try await groupProjectRepository.save(project: project)
+        _ = try await manageGroupDeliverablesUseCase.updateTask(
+            taskId: taskId,
+            title: title,
+            dueDate: dueDate,
+            assignedMemberId: assignedMemberId,
+            isCompleted: isCompleted,
+            inProjectId: projectId
+        )
         await loadProjects()
     }
 
     /// Deletes a task from a group project.
     public func deleteTask(taskId: UUID, inProjectId projectId: UUID) async throws {
-        guard var project = try await groupProjectRepository.fetchProject(by: projectId) else {
-            throw RepositoryError.notFound(id: projectId)
-        }
-
-        project.tasks.removeAll { $0.id == taskId }
-        for (idx, _) in project.tasks.enumerated() {
-            project.tasks[idx].orderIndex = idx
-        }
-
-        try await groupProjectRepository.save(project: project)
+        _ = try await manageGroupDeliverablesUseCase.deleteTask(
+            taskId: taskId,
+            inProjectId: projectId
+        )
         await loadProjects()
     }
 
@@ -222,23 +191,11 @@ public final class GroupWorkViewModel {
         role: String? = nil,
         toProjectId projectId: UUID
     ) async throws {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            throw RepositoryError.invalidData(reason: "Member name cannot be empty.")
-        }
-
-        guard var project = try await groupProjectRepository.fetchProject(by: projectId) else {
-            throw RepositoryError.notFound(id: projectId)
-        }
-
-        let member = GroupMember(
-            id: UUID(),
-            name: trimmed,
-            role: role?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false ? role : nil
+        _ = try await manageGroupDeliverablesUseCase.addMember(
+            name: name,
+            role: role,
+            toProjectId: projectId
         )
-
-        project.members.append(member)
-        try await groupProjectRepository.save(project: project)
         await loadProjects()
     }
 
@@ -251,38 +208,30 @@ public final class GroupWorkViewModel {
     ) async throws {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
-            throw RepositoryError.invalidData(reason: "Member name cannot be empty.")
+            throw GroupProjectError.emptyName
         }
 
-        guard var project = try await groupProjectRepository.fetchProject(by: projectId) else {
-            throw RepositoryError.notFound(id: projectId)
+        guard var project = try await getGroupProjectsUseCase.execute(byId: projectId) else {
+            throw GroupProjectError.projectNotFound
         }
 
         guard let memberIndex = project.members.firstIndex(where: { $0.id == memberId }) else {
-            throw RepositoryError.notFound(id: memberId)
+            throw GroupProjectError.memberNotFound
         }
 
         project.members[memberIndex].name = trimmed
         project.members[memberIndex].role = role?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false ? role : nil
 
-        try await groupProjectRepository.save(project: project)
+        _ = try await saveGroupProjectUseCase.execute(project: project)
         await loadProjects()
     }
 
     /// Removes a team member and unassigns their tasks.
     public func deleteMember(memberId: UUID, inProjectId projectId: UUID) async throws {
-        guard var project = try await groupProjectRepository.fetchProject(by: projectId) else {
-            throw RepositoryError.notFound(id: projectId)
-        }
-
-        project.members.removeAll { $0.id == memberId }
-
-        // Unassign member from tasks
-        for (idx, task) in project.tasks.enumerated() where task.assignedMemberId == memberId {
-            project.tasks[idx].assignedMemberId = nil
-        }
-
-        try await groupProjectRepository.save(project: project)
+        _ = try await manageGroupDeliverablesUseCase.deleteMember(
+            memberId: memberId,
+            fromProjectId: projectId
+        )
         await loadProjects()
     }
 

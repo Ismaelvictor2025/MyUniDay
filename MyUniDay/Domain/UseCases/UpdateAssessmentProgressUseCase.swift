@@ -22,24 +22,34 @@ public final class UpdateAssessmentProgressUseCase: Sendable {
     ///   - assessmentId: The UUID of the assessment to update.
     ///   - progress: The user-specified progress (0.0 to 1.0).
     /// - Returns: The updated assessment.
+    /// - Throws: `AssessmentProgressUpdateError` if assessment is not found, has child tasks, or cannot be saved.
     @discardableResult
     public func execute(assessmentId: UUID, progress: Double) async throws -> Assessment {
         guard var assessment = try await assessmentRepository.fetchAssessment(by: assessmentId) else {
-            throw RepositoryError.notFound(id: assessmentId)
+            throw AssessmentProgressUpdateError.assessmentNotFound
         }
         guard let subjectId = assessment.subjectId else {
-            throw RepositoryError.invalidData(reason: "Assessment has no parent subject.")
+            throw AssessmentProgressUpdateError.missingParentSubject
         }
 
         // Section 5 Rule: Manual progress only applies when there are zero breakdown tasks
-        if assessment.tasks.isEmpty {
-            let clamped = min(max(progress, 0.0), 1.0)
-            assessment.progress = clamped
-            assessment.isCompleted = clamped >= 0.999
-            try await assessmentRepository.save(assessment: assessment, forSubjectId: subjectId)
-            NotificationCenter.default.post(name: .academicDataDidChange, object: nil)
+        guard assessment.tasks.isEmpty else {
+            throw AssessmentProgressUpdateError.manualOverrideForbidden(taskCount: assessment.tasks.count)
         }
 
-        return assessment
+        guard progress >= 0.0 && progress <= 1.0 else {
+            throw AssessmentProgressUpdateError.invalidProgressRange(progress: progress)
+        }
+
+        assessment.progress = progress
+        assessment.isCompleted = progress >= 0.999
+
+        do {
+            try await assessmentRepository.save(assessment: assessment, forSubjectId: subjectId)
+            NotificationCenter.default.post(name: .academicDataDidChange, object: nil)
+            return assessment
+        } catch {
+            throw AssessmentProgressUpdateError.persistenceFailed(reason: error.localizedDescription)
+        }
     }
 }

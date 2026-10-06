@@ -17,14 +17,12 @@ public enum TaskFilter: String, CaseIterable, Identifiable, Sendable {
     public var id: String { rawValue }
 }
 
-/// ViewModel coordinating actionable university subtasks and class preparation checklists.
+/// ViewModel coordinating actionable university subtasks and class preparation checklists via Domain Use Cases.
 @Observable
 @MainActor
 public final class TasksViewModel {
     // MARK: - Dependencies
-    private let assessmentRepository: AssessmentRepositoryProtocol
-    private let classSessionRepository: ClassSessionRepositoryProtocol
-    private let subjectRepository: SubjectRepositoryProtocol?
+    private let getStudentTasksUseCase: GetStudentTasksUseCase
     private let toggleTaskCompletionUseCase: ToggleTaskCompletionUseCase
     private let createTaskUseCase: CreateTaskUseCase
 
@@ -74,15 +72,11 @@ public final class TasksViewModel {
 
     // MARK: - Initialization
     public init(
-        assessmentRepository: AssessmentRepositoryProtocol,
-        classSessionRepository: ClassSessionRepositoryProtocol,
-        subjectRepository: SubjectRepositoryProtocol? = nil,
+        getStudentTasksUseCase: GetStudentTasksUseCase,
         toggleTaskCompletionUseCase: ToggleTaskCompletionUseCase,
         createTaskUseCase: CreateTaskUseCase
     ) {
-        self.assessmentRepository = assessmentRepository
-        self.classSessionRepository = classSessionRepository
-        self.subjectRepository = subjectRepository
+        self.getStudentTasksUseCase = getStudentTasksUseCase
         self.toggleTaskCompletionUseCase = toggleTaskCompletionUseCase
         self.createTaskUseCase = createTaskUseCase
 
@@ -112,25 +106,17 @@ public final class TasksViewModel {
         errorMessage = nil
 
         do {
-            async let subjectsTask = subjectRepository?.fetchSubjects() ?? []
-            async let assessmentsTask = assessmentRepository.fetchAllAssessments()
-            async let sessionsTask = classSessionRepository.fetchUpcomingClassSessions(from: .distantPast)
+            let overview = try await getStudentTasksUseCase.execute()
 
-            let (subjects, assessments, sessions) = try await (subjectsTask, assessmentsTask, sessionsTask)
-
-            var subjectMap: [UUID: UniversitySubject] = [:]
-            for subject in subjects {
-                subjectMap[subject.id] = subject
-            }
-            self.subjectsById = subjectMap
-            self.availableAssessments = assessments
-            self.availableSessions = sessions
+            self.subjectsById = overview.subjectsById
+            self.availableAssessments = overview.assessments
+            self.availableSessions = overview.sessions
 
             var unified: [UnifiedTaskItem] = []
 
             // 1. Process Assessment Tasks
-            for assessment in assessments {
-                let subjectCode = assessment.subjectId.flatMap { subjectMap[$0]?.code }
+            for assessment in overview.assessments {
+                let subjectCode = assessment.subjectId.flatMap { overview.subjectsById[$0]?.code }
                 for task in assessment.tasks {
                     unified.append(
                         UnifiedTaskItem(
@@ -150,7 +136,7 @@ public final class TasksViewModel {
             }
 
             // 2. Process Class Preparation Items
-            for session in sessions {
+            for session in overview.sessions {
                 let classTitle = "\(session.classType.rawValue) (\(session.building) \(session.room))"
                 for prep in session.preparationItems {
                     unified.append(

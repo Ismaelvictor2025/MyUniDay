@@ -36,15 +36,15 @@ public final class CreateTaskUseCase: Sendable {
     ) async throws -> AssessmentTask {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
-            throw RepositoryError.invalidData(reason: "Task title cannot be empty.")
+            throw TaskManagementError.emptyTitle
         }
 
         guard var assessment = try await assessmentRepository.fetchAssessment(by: assessmentId) else {
-            throw RepositoryError.notFound(id: assessmentId)
+            throw TaskManagementError.assessmentNotFound
         }
 
         guard let subjectId = assessment.subjectId else {
-            throw RepositoryError.invalidData(reason: "Assessment has no parent subject.")
+            throw TaskManagementError.missingParentSubject
         }
 
         let task = AssessmentTask(
@@ -61,9 +61,13 @@ public final class CreateTaskUseCase: Sendable {
         // Recalculate progress using central calculator
         AssessmentProgressCalculator.synchronize(&assessment)
 
-        try await assessmentRepository.save(assessment: assessment, forSubjectId: subjectId)
-        NotificationCenter.default.post(name: .academicDataDidChange, object: nil)
-        return task
+        do {
+            try await assessmentRepository.save(assessment: assessment, forSubjectId: subjectId)
+            NotificationCenter.default.post(name: .academicDataDidChange, object: nil)
+            return task
+        } catch {
+            throw TaskManagementError.persistenceFailed(reason: error.localizedDescription)
+        }
     }
 
     /// Updates an existing milestone task within an assessment and synchronizes progress.
@@ -77,19 +81,19 @@ public final class CreateTaskUseCase: Sendable {
     ) async throws -> Assessment {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
-            throw RepositoryError.invalidData(reason: "Task title cannot be empty.")
+            throw TaskManagementError.emptyTitle
         }
 
         guard var assessment = try await assessmentRepository.fetchAssessment(by: assessmentId) else {
-            throw RepositoryError.notFound(id: assessmentId)
+            throw TaskManagementError.assessmentNotFound
         }
 
         guard let taskIndex = assessment.tasks.firstIndex(where: { $0.id == taskId }) else {
-            throw RepositoryError.notFound(id: taskId)
+            throw TaskManagementError.taskNotFound
         }
 
         guard let subjectId = assessment.subjectId else {
-            throw RepositoryError.invalidData(reason: "Assessment has no parent subject.")
+            throw TaskManagementError.missingParentSubject
         }
 
         assessment.tasks[taskIndex].title = trimmed
@@ -101,9 +105,13 @@ public final class CreateTaskUseCase: Sendable {
         }
 
         AssessmentProgressCalculator.synchronize(&assessment)
-        try await assessmentRepository.save(assessment: assessment, forSubjectId: subjectId)
-        NotificationCenter.default.post(name: .academicDataDidChange, object: nil)
-        return assessment
+        do {
+            try await assessmentRepository.save(assessment: assessment, forSubjectId: subjectId)
+            NotificationCenter.default.post(name: .academicDataDidChange, object: nil)
+            return assessment
+        } catch {
+            throw TaskManagementError.persistenceFailed(reason: error.localizedDescription)
+        }
     }
 
     /// Deletes a milestone task from an assessment and recalculates progress.
@@ -113,11 +121,11 @@ public final class CreateTaskUseCase: Sendable {
         fromAssessmentId assessmentId: UUID
     ) async throws -> Assessment {
         guard var assessment = try await assessmentRepository.fetchAssessment(by: assessmentId) else {
-            throw RepositoryError.notFound(id: assessmentId)
+            throw TaskManagementError.assessmentNotFound
         }
 
         guard let subjectId = assessment.subjectId else {
-            throw RepositoryError.invalidData(reason: "Assessment has no parent subject.")
+            throw TaskManagementError.missingParentSubject
         }
 
         assessment.tasks.removeAll { $0.id == taskId }
@@ -128,9 +136,13 @@ public final class CreateTaskUseCase: Sendable {
         }
 
         AssessmentProgressCalculator.synchronize(&assessment)
-        try await assessmentRepository.save(assessment: assessment, forSubjectId: subjectId)
-        NotificationCenter.default.post(name: .academicDataDidChange, object: nil)
-        return assessment
+        do {
+            try await assessmentRepository.save(assessment: assessment, forSubjectId: subjectId)
+            NotificationCenter.default.post(name: .academicDataDidChange, object: nil)
+            return assessment
+        } catch {
+            throw TaskManagementError.persistenceFailed(reason: error.localizedDescription)
+        }
     }
 
     /// Appends a new preparation item to a class session.
@@ -148,21 +160,25 @@ public final class CreateTaskUseCase: Sendable {
     ) async throws -> PreparationItem {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
-            throw RepositoryError.invalidData(reason: "Preparation item title cannot be empty.")
+            throw TaskManagementError.emptyTitle
         }
 
-        let existing = try await preparationItemRepository.fetchPreparationItems(forSessionId: sessionId)
-        let item = PreparationItem(
-            id: UUID(),
-            classSessionId: sessionId,
-            title: trimmed,
-            notes: notes?.trimmingCharacters(in: .whitespacesAndNewlines),
-            isCompleted: false,
-            orderIndex: existing.count
-        )
+        do {
+            let existing = try await preparationItemRepository.fetchPreparationItems(forSessionId: sessionId)
+            let item = PreparationItem(
+                id: UUID(),
+                classSessionId: sessionId,
+                title: trimmed,
+                notes: notes?.trimmingCharacters(in: .whitespacesAndNewlines),
+                isCompleted: false,
+                orderIndex: existing.count
+            )
 
-        try await preparationItemRepository.save(item: item, forSessionId: sessionId)
-        NotificationCenter.default.post(name: .academicDataDidChange, object: nil)
-        return item
+            try await preparationItemRepository.save(item: item, forSessionId: sessionId)
+            NotificationCenter.default.post(name: .academicDataDidChange, object: nil)
+            return item
+        } catch {
+            throw TaskManagementError.persistenceFailed(reason: error.localizedDescription)
+        }
     }
 }

@@ -354,7 +354,7 @@ public struct DashboardView: View {
             SupportView()
         case .reminders:
             if let container = container {
-                RemindersView(viewModel: container.makeRemindersViewModel())
+                RemindersView(viewModel: container.makeRemindersViewModel(), container: container)
             }
         case .more:
             #if DEBUG
@@ -372,41 +372,22 @@ public struct DashboardView: View {
         switch action {
         case .addAssessment:
             AddAssessmentView(
-                subjects: subjects,
+                subjects: viewModel.availableSubjects.isEmpty ? subjects : viewModel.availableSubjects,
                 onSave: { title, subjectId, dueDate, weighting, workload, progress, notes, breakdownSteps in
-                    guard let container = container else { return }
-                    let assessmentId = UUID()
-                    let tasks = breakdownSteps.enumerated().map { idx, step in
-                        AssessmentTask(
-                            id: UUID(),
-                            assessmentId: assessmentId,
-                            title: step,
-                            isCompleted: false,
-                            orderIndex: idx
-                        )
-                    }
-                    var assessment = Assessment(
-                        id: assessmentId,
+                    try await viewModel.createAssessment(
                         title: title,
+                        subjectId: subjectId,
                         dueDate: dueDate,
                         weighting: weighting,
                         estimatedWorkloadHours: workload,
                         progress: progress,
-                        isCompleted: progress >= 1.0,
                         notes: notes,
-                        tasks: tasks
+                        breakdownSteps: breakdownSteps
                     )
-                    AssessmentProgressCalculator.synchronize(&assessment)
-                    try await container.createAssessmentUseCase.execute(assessment: assessment, forSubjectId: subjectId)
-                    await viewModel.refresh()
                     await loadQuickActionDependencies()
                 },
                 onCreateSubject: { code, name in
-                    guard let container = container else {
-                        throw RepositoryError.invalidData(reason: "Container unavailable")
-                    }
-                    let subject = UniversitySubject(code: code, name: name, colorHex: "#3F51B5")
-                    try await container.createSubjectUseCase.execute(subject: subject)
+                    let subject = try await viewModel.createSubject(code: code, name: name)
                     await loadQuickActionDependencies()
                     return subject
                 }
@@ -414,10 +395,9 @@ public struct DashboardView: View {
 
         case .addClass:
             AddClassView(
-                subjects: subjects,
+                subjects: viewModel.availableSubjects.isEmpty ? subjects : viewModel.availableSubjects,
                 onSave: { subjectId, type, start, end, campus, building, room in
-                    guard let container = container else { return }
-                    let session = ClassSession(
+                    try await viewModel.createClassSession(
                         subjectId: subjectId,
                         classType: type,
                         startDate: start,
@@ -426,16 +406,10 @@ public struct DashboardView: View {
                         building: building,
                         room: room
                     )
-                    try await container.createClassSessionUseCase.execute(classSession: session, forSubjectId: subjectId)
-                    await viewModel.refresh()
                     await loadQuickActionDependencies()
                 },
                 onCreateSubject: { code, name in
-                    guard let container = container else {
-                        throw RepositoryError.invalidData(reason: "Container unavailable")
-                    }
-                    let subject = UniversitySubject(code: code, name: name, colorHex: "#3F51B5")
-                    try await container.createSubjectUseCase.execute(subject: subject)
+                    let subject = try await viewModel.createSubject(code: code, name: name)
                     await loadQuickActionDependencies()
                     return subject
                 }
@@ -443,26 +417,22 @@ public struct DashboardView: View {
 
         case .addTask:
             AddTaskView(
-                assessments: allAssessments,
-                sessions: upcomingSessions,
+                assessments: viewModel.availableAssessments.isEmpty ? allAssessments : viewModel.availableAssessments,
+                sessions: viewModel.availableSessions.isEmpty ? upcomingSessions : viewModel.availableSessions,
                 onSaveAssessmentTask: { title, dueDate, assessmentId in
-                    guard let container = container else { return }
-                    _ = try await container.createTaskUseCase.addAssessmentTask(
+                    try await viewModel.createAssessmentTask(
                         title: title,
                         dueDate: dueDate,
-                        toAssessmentId: assessmentId
+                        assessmentId: assessmentId
                     )
-                    await viewModel.refresh()
                     await loadQuickActionDependencies()
                 },
                 onSavePreparationItem: { title, notes, sessionId in
-                    guard let container = container else { return }
-                    _ = try await container.createTaskUseCase.addPreparationItem(
+                    try await viewModel.createPreparationItem(
                         title: title,
                         notes: notes,
-                        toSessionId: sessionId
+                        sessionId: sessionId
                     )
-                    await viewModel.refresh()
                     await loadQuickActionDependencies()
                 }
             )
@@ -470,10 +440,9 @@ public struct DashboardView: View {
     }
 
     private func loadQuickActionDependencies() async {
-        guard let container = container else { return }
-        self.subjects = (try? await container.getSubjectsUseCase.execute()) ?? []
-        self.allAssessments = (try? await container.assessmentRepository.fetchAllAssessments()) ?? []
-        self.upcomingSessions = (try? await container.classSessionRepository.fetchUpcomingClassSessions(from: Date())) ?? []
+        self.subjects = viewModel.availableSubjects
+        self.allAssessments = viewModel.availableAssessments
+        self.upcomingSessions = viewModel.availableSessions
     }
 
     private func errorBanner(message: String) -> some View {
